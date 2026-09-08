@@ -181,7 +181,11 @@ The wording is a starting point, not a script: adjust it to the recipient and, w
 
 The tone note above is the floor. The habits below are what make a draft sound like Jack rather than like a competent stranger. Match them.
 
-**React first, business second.** He opens by responding to the person, not by restating the thread. "Oh fantastic! Yes, it would be interesting to..." or "Glad you'll be there." One short line, then the substance. Never open with "I hope this email finds you well" or a summary of what they just said.
+The habits in this section describe his **warm reactive voice**: replies, inside a live thread, to someone he knows. That is not his only register. For outbound mail, first contact, senior officials, sponsors, speakers, suppliers, declines, and internal updates, read **`writing-style.md`** in this skill folder before drafting. It maps the register to the recipient and is drawn from a five-year read of his Sent Items.
+
+**React first, business second.** He opens by responding to the person, not by restating the thread. "Oh fantastic! Yes, it would be interesting to..." or "Glad you'll be there." One short line, then the substance. Do not open a reply with "I hope this email finds you well" or a summary of what they just said.
+
+Note the limit of that rule: it applies to **replies**. When Jack starts a conversation, or writes to someone cold, the pleasantry opener is his most consistent habit ("I hope you're well.", "I hope this finds you well.", "I hope this message finds you well." for formal first contact). React first when there is something to react to; ask after them first when there is not.
 
 **Warm and slightly informal with people he knows.** "Hi [Name]," almost always, not "Dear". "Best," as the sign-off for anyone he has a relationship with; "Kind regards," for first contact or formal correspondence. An exclamation mark is fine where he genuinely means it ("it would be great if you can meet face to face!"), roughly one per email at most.
 
