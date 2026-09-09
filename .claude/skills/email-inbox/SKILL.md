@@ -98,7 +98,25 @@ You have **N conversations** in your inbox:
 | 1 | name(s) | subject | count | date |
 ```
 
-Then note which conversations likely need attention (e.g., unread, awaiting reply, action requested) and which are resolved/informational.
+Then note which conversations likely need attention (e.g., unread, awaiting reply, action requested) and which are resolved/informational. Before deciding that, apply Step 2b: most of what lands in the inbox is not Jack's to answer.
+
+### Step 2b — Is it actually Jack's to answer?
+
+**Landing in Jack's inbox does not mean it is addressed to Jack.** He is copied on a great deal of the team's mail, and the ICPS house style is to forward long chains around, so a thread can arrive with his name nowhere in it. Drafting a reply to everything in the inbox produces mail he should not be sending, and worse, mail that cuts across a colleague who already owns the thread.
+
+Check three things before treating a conversation as needing a reply from him.
+
+**1. Who is it addressed to?** Read the To line of the latest message, not just the sender. If Jack is only in CC, or the mail is written to a colleague (`Dear Melissa`, `Dear Ms. Ramasawmy`), the default is **no draft**. Say what was asked and who owns it, then move on.
+
+**2. Has someone handed it to him?** A colleague explicitly passing something over makes it his, whoever the mail was originally written to. The usual forms are Tracy's "Jack can you follow up on this", Swastee's "Please advise" or "Please register him", and anything forwarded to him with a direct question attached. These are real actions.
+
+**3. Whose job is the substance?** Delegate logistics belong to the events team, not to Jack: attendance confirmations, flight details, rooming lists, workshop sign-ups, invitation letters and joining details are recorded by **Wendy Ramasawmy**, **Devianee Nithoo**, **Swastee Ramsurrun**, **Melissa Golam** and **Anoda Payannandee**. When a delegate writes in about any of those, even warmly and at length, the right output is usually a note of what they asked for so it gets tracked, not a draft from Jack. Jack owns the website, the programme and agenda, sponsors' logistics, speakers, and anything a colleague has handed him.
+
+Worked example, 9 September 2026: Paolo Maligaya of NAMFREL wrote to Wendy Ramasawmy confirming attendance and asking for a room, a workshop place and an invitation for his National Chairperson. It was in Jack's inbox, it was unanswered, and it was easy to draft. It was still Wendy's to answer, and Jack dropped the draft. The three asks were logged in `projects/awards26/TODO.md` instead so they would not be lost.
+
+**Stale threads.** The inbox is not a to-do list and is not cleared, so old conversations sit in it indefinitely. **Check the date of the latest message.** Something weeks old that has gone quiet is usually a dead thread rather than an outstanding action, and reviving it produces an apologetic chase Jack did not want to send. Same day, the Declan O'Brien thread (Kofi Annan Foundation) was two weeks cold in the inbox; a chase was drafted and dropped.
+
+When in doubt, list it as "not obviously yours, no draft made" and let Jack ask for one. Under-drafting costs a sentence; over-drafting costs him a reply he has to unpick.
 
 ### Step 3 — Walk through conversations one at a time
 
@@ -476,6 +494,7 @@ See Step 5b for the workflow.
 
 1. **NEVER send an email.** Only open draft windows for the user to review and send manually.
 2. **Always use the Exchange account** — `account "Exchange"`, mailbox `"Inbox"` (handled by the scripts).
+2b. **Do not draft a reply to everything in the inbox.** Jack is CC'd on most of the team's mail and the inbox holds stale threads. Draft only where he is actually addressed, where a colleague has handed him the thread, or where the substance is his. See **Step 2b**; delegate logistics are the events team's, not his.
 3. **Replies → Apple Mail via `reply.sh`. New composes → Outlook via `compose.sh`.** Do not mix.
 4. **Do not include a signature or a closing sign-off name** in drafted emails — end at "Kind regards," and stop. Jack's full signature is configured in both clients and is appended automatically; adding one duplicates it.
 5. **Always reply all** — `reply.sh` uses `reply to all` so existing CC recipients are preserved. Use `--cc` only for *additional* recipients not already on the thread.
