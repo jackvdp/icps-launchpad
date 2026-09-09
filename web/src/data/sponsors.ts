@@ -76,7 +76,8 @@ export const sponsors2026: Array<Sponsor> = [
         name: "Neuvote"
     },
     {
-        name: "A. Daga Steel"
+        name: "A Daga Steel and Industrial Corporation",
+        logo: "/img/sponsors/a-daga.png"
     },
     {
         name: "Mantratec"
