@@ -74,7 +74,8 @@ target_dir="${target_dir:A}"   # absolute, symlinks resolved
 session_name="${2:-${target_dir:t}}"
 
 cd "$target_dir" || exit 1
-out=$(claude --bg --remote-control "$session_name" 2>&1)
+# --remote-control takes no name; -n/--name is what sets the display name.
+out=$(claude --bg --remote-control --name "$session_name" 2>&1)
 rc=$?
 
 if [ $rc -ne 0 ]; then
