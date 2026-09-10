@@ -1,7 +1,7 @@
 ---
 name: email-inbox
 description: Email assistant for any mailbox configured in Apple Mail. Reads and searches mail through the apple-mail-readonly MCP, walks conversations as threads, drafts replies in Apple Mail and new composes in Outlook or Mail, and files, flags and marks mail read. Which account, which client, whose voice and where things get filed all come from an account profile in .claude/email-accounts/. Use when the user wants to triage an inbox, search past correspondence, follow a thread, reply, compose, file mail into folders, or write one of the standard emails from a template.
-argument-hint: [optional: account name, number of emails, search term, or "next" to continue]
+argument-hint: [optional: account name, number of emails, search term, or "next"; no argument triages the default account's inbox]
 allowed-tools: Bash, Read, Write, Edit
 ---
 
@@ -15,6 +15,30 @@ outgoing message is opened as a draft for the user to review and send.
 Everything account-specific lives outside this skill, in an **account profile**.
 The skill itself knows nothing about whose mail it is, which folders exist, or
 how the owner writes.
+
+## Invoked with no arguments
+
+`/email-inbox` on its own means **triage the default account's inbox**: work
+Step 0, then Step 1, then walk the conversations from Step 3. The default
+account is the profile whose frontmatter says `default: true`.
+
+Say which account is in play in the first line of the reply, so a wrong default
+is caught before anything is drafted:
+
+> Reading **jack-icps** (Exchange, jack.vanderpump@publicpolicyexchange.co.uk).
+
+An argument changes the starting point, not the account rules:
+
+| Argument | What it means |
+|---|---|
+| *(none)* | triage the default account's inbox |
+| a profile slug or account name (`jack-tech`) | triage that account's inbox instead |
+| a number (`10`) | triage, capped at that many messages |
+| any other text (`COMELEC`, `sponsor invoices`) | search rather than triage, on the default account |
+| `next` | continue the walk from where the last session stopped |
+
+Anything ambiguous between an account name and a search term is an account
+name; say so and offer the search if that was not the intent.
 
 ---
 
