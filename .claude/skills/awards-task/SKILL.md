@@ -53,9 +53,10 @@ Do the task properly, routing through the existing skills rather than reinventin
 
 | Task shape | Route |
 |---|---|
-| New outgoing email (welcome, chase, invitation) | `/email-inbox` conventions: compose in **Outlook**, draft only |
-| Reply in an existing thread | `/email-inbox`: reply in **Apple Mail**, draft only |
-| Checking what someone last said | `/email-inbox` search across Exchange mailboxes |
+| New outgoing email (welcome, chase, invitation) | `/email-inbox` on the `jack-icps` profile: composes in **Outlook**, draft only |
+| Reply in an existing thread | `/email-inbox`: replies go through **Apple Mail**, draft only |
+| Checking what someone last said | `/email-inbox` search, which reads Exchange through the apple-mail-readonly MCP |
+| Filing a settled thread out of the inbox | `/email-inbox` `move.sh`, against the filing map in `.claude/email-accounts/jack-icps.md` |
 | Website content or code change | `/website-dev`; events via `/edit-event` / `/add-event` |
 | Speaker research | `/find-speakers` |
 | Bulk contact list or mail merge | `/find-bulk-contacts`, `/send-bulk-emails` |

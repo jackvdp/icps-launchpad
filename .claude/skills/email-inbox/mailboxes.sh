@@ -1,14 +1,16 @@
 #!/bin/bash
-# Search and browse Apple Mail mailboxes on the Exchange account (work mail).
-# Deliberately scoped to the Exchange account only — personal accounts
-# (Personal, Pumpy, Tech) are never touched.
+# Search and browse the mailboxes of one Apple Mail account.
+#
+# The account comes from --account, or from the default profile in
+# .claude/email-accounts/. Only that one account is ever touched, so a work
+# profile cannot wander into personal mail.
 #
 # Usage:
-#   ./mailboxes.sh --list [--filter "term"]
-#       List all Exchange mailboxes with their full nested path and message
+#   ./mailboxes.sh --list [--filter "term"] [--account NAME]
+#       List the account's mailboxes with their full nested path and message
 #       count. Optional --filter matches mailbox names (case-sensitive).
 #
-#   ./mailboxes.sh --mailbox "Name" [--search "term"] [--max N] [--preview|--full]
+#   ./mailboxes.sh --mailbox "Name" [--search "term"] [--max N] [--preview|--full] [--account NAME]
 #       Browse or search a mailbox by NAME (no path needed — nested mailboxes
 #       such as "Awards 26" under "Electoral" are found automatically; every
 #       mailbox with that name is covered). Without --search, shows the most
@@ -18,6 +20,7 @@
 #   default    headers only (FROM / SUBJECT / DATE) — fast, use for scanning
 #   --preview  adds the first 300 characters of each body
 #   --full     adds the first 3000 characters of each body
+#   --ids      adds the RFC Message-ID, which mark.sh and move.sh match on
 #
 # Notes:
 #   - "Sent Items" and "Deleted Items" hold 10k–25k messages: always pair them
@@ -25,15 +28,23 @@
 #   - Searching uses a fast Mail query first and falls back to scanning the
 #     300 most recent messages if the query fails.
 
+source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+
 MODE=""
 MAILBOX=""
 SEARCH=""
 FILTER=""
 MAX=20
 BODYCHARS=0
+ACCOUNT_ARG=""
+WITH_IDS=false
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        --account)
+            ACCOUNT_ARG="$2"
+            shift 2
+            ;;
         --list)
             MODE="list"
             shift
@@ -63,6 +74,10 @@ while [[ $# -gt 0 ]]; do
             BODYCHARS=3000
             shift
             ;;
+        --ids)
+            WITH_IDS=true
+            shift
+            ;;
         *)
             echo "Unknown argument: $1" >&2
             exit 1
@@ -70,13 +85,24 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+resolve_account "$ACCOUNT_ARG"
+
+E_ACCOUNT="$(as_escape "$ACCOUNT")"
+E_MAILBOX="$(as_escape "$MAILBOX")"
+E_SEARCH="$(as_escape "$SEARCH")"
+E_FILTER="$(as_escape "$FILTER")"
+
+ID_LINE=""
+[[ "$WITH_IDS" == true ]] && ID_LINE='                    set output to output & "ID: " & (message id of m) & linefeed'
+
 if [[ "$MODE" == "list" ]]; then
     cat > /tmp/email-mailboxes.applescript << APPLESCRIPT
-set filterTerm to "$FILTER"
+set filterTerm to "$E_FILTER"
+set accountName to "$E_ACCOUNT"
 set output to ""
 
 tell application "Mail"
-    set acct to account "Exchange"
+    set acct to account accountName
     repeat with mb in mailboxes of acct
         try
             set mbName to name of mb
@@ -104,8 +130,9 @@ APPLESCRIPT
 
 elif [[ "$MODE" == "mailbox" ]]; then
     cat > /tmp/email-mailboxes.applescript << APPLESCRIPT
-set targetName to "$MAILBOX"
-set searchTerm to "$SEARCH"
+set accountName to "$E_ACCOUNT"
+set targetName to "$E_MAILBOX"
+set searchTerm to "$E_SEARCH"
 set maxCount to $MAX
 set bodyChars to $BODYCHARS
 set output to ""
@@ -114,7 +141,7 @@ set shown to 0
 set foundBox to false
 
 tell application "Mail"
-    set acct to account "Exchange"
+    set acct to account accountName
     repeat with mb in mailboxes of acct
         if (name of mb) is targetName then
             set foundBox to true
@@ -152,6 +179,7 @@ tell application "Mail"
                     set output to output & "FROM: " & (sender of m) & linefeed
                     set output to output & "SUBJECT: " & (subject of m) & linefeed
                     set output to output & "DATE: " & ((date received of m) as string) & linefeed
+$ID_LINE
                     if bodyChars > 0 then
                         set msgContent to content of m
                         if (count of msgContent) > bodyChars then
@@ -167,13 +195,13 @@ tell application "Mail"
     end repeat
 end tell
 
-if not foundBox then return "No Exchange mailbox named: " & targetName
+if not foundBox then return "No mailbox named " & targetName & " on account " & accountName
 if output is "" then return "No matching messages in mailbox: " & targetName
 return output
 APPLESCRIPT
 
 else
-    echo "Usage: mailboxes.sh --list [--filter term] | --mailbox \"Name\" [--search term] [--max N] [--preview|--full]" >&2
+    echo "Usage: mailboxes.sh [--account NAME] --list [--filter term] | --mailbox \"Name\" [--search term] [--max N] [--preview|--full]" >&2
     exit 1
 fi
 

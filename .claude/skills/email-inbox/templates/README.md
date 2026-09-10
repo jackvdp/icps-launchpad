@@ -16,12 +16,13 @@ Reusable emails for the `/email-inbox` skill. Each file has the same shape: when
 1. Read the template file and confirm the bracketed fields with the user (or pull them from the event's data file, the electoral dashboard, or the relevant `projects/<project>/` folder).
 2. Substitute every `[FIELD]`. Leave nothing bracketed in the draft.
 3. Show the finished body to the user in a code block before opening it.
-4. Run the `compose.sh` command from the template to open the draft in Outlook.
+4. Run the `compose.sh` command from the template to open the draft. It opens in whichever client the active account profile names; these templates are written for the ICPS account, which composes in Outlook.
 
 ## Conventions shared by all templates
 
+- These templates assume the `jack-icps` profile: ICPS work, composed in Outlook, with a signature already configured in the client. On an account whose profile says `signature: none`, add the sign-off the profile gives.
 - Compose via `compose.sh --html` so lists, bold and links render in Outlook. Never send; only open the draft.
-- No signature block and no sign-off name. End at the closing line; the mail client appends Jack's signature.
+- No signature block and no sign-off name. End at the closing line; the mail client appends the signature.
 - British English, no em dashes (and no `&mdash;`). Use en dashes (`&ndash;`) for time ranges only.
 - Link to the live event page on electoralnetwork.org as a hyperlink on descriptive text, never a bare URL.
 - Single quotes inside HTML attributes (`href='...'`).

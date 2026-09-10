@@ -33,7 +33,7 @@ Editor, NOMOS content platform
 jack@vanderpump.tech
 ```
 
-`/email-inbox` and its Outlook compose script are for ICPS work. Use them here only to *search* Exchange for correspondence history, never to send.
+`/email-inbox`'s `jack-icps` profile is for ICPS work: use it here only to *search* Exchange for correspondence history, never to send. Consultancy mail goes out on the `jack-tech` profile, which composes in Apple Mail from `jack@vanderpump.tech`.
 
 ## Writing
 

@@ -11,6 +11,7 @@ This repo is the working directory for **Jack Vanderpump** (Head of Policy Resea
 .
 ├── web/                Next.js app (electoralnetwork.org) — package.json, src/, pages/, etc.
 ├── .claude/skills/     Skills (admin + website)
+├── .claude/email-accounts/  Mail account profiles used by /email-inbox
 ├── projects/           Cross-cutting work, one subfolder per project (each has its own CLAUDE.md)
 ├── scripts/            Admin AppleScripts
 └── CLAUDE.md           This file
@@ -53,7 +54,7 @@ Note: `projects/` is gitignored (local working area), so its contents are not co
 | Write and publish an article | `/add-article` |
 | LinkedIn post on the Network organisation page | `/linkedin-post` |
 | Social/promo graphics: LinkedIn carousels, post images, event visuals (design canvas + PDF/PNG render) | `/social-graphics` |
-| Triage inbox, draft replies (Apple Mail) and new composes (Outlook) | `/email-inbox` |
+| Triage an inbox, search and follow threads, draft replies, file and mark mail | `/email-inbox` |
 | Edit a Pages/Word document, build a letter from a template, export a PDF | `/edit-doc` |
 | Research and shortlist external speakers (CSV + emails) | `/find-speakers` |
 | Build a large audience/delegate contact list (100-500) for a mail merge | `/find-bulk-contacts` |
@@ -80,6 +81,9 @@ Skills load their own context when invoked — don't pre-load awards or website 
 - `.pages` (Apple Pages) files can't be read directly — use `.emltpl` or exported `.txt`
 - `.emltpl` files: raw email with quoted-printable encoding; plain text usually lives in lines 20–100
 - Drafted emails are transient: compose to a scratch/working file, open or send via Outlook / Apple Mail (or run the mail-merge), then delete the file. Do not store email drafts in the repo. There is no top-level `emails/` directory. Persistent data deliverables (speaker/contact CSVs, research lists) go into the relevant `projects/<project>/` folder.
+
+### Mail accounts
+- `/email-inbox` works on any account Apple Mail holds, and reads its settings from an **account profile** in `.claude/email-accounts/` (one Markdown file per account: which Apple Mail account, which client composes, whose voice, the filing map, the triage rules). `jack-icps.md` is the default (Exchange / ICPS); `jack-tech.md` covers the private consultancy address. The format and how to add one are in that folder's `README.md`. Reading and searching go through the `apple-mail-readonly` MCP; replying, composing, filing and marking go through the skill's scripts.
 
 ### Email templates
 - Reusable email templates live in the `/email-inbox` skill at `.claude/skills/email-inbox/templates/` (index and conventions in its `README.md`). Webinar templates in `templates/webinars/`: `speaker-briefing.md` (pre-event logistics email to confirmed speakers), `delegate-briefing.md` (joining details to registered delegates). Awards templates in `templates/awards/`: `sponsor-welcome.md` (first logistics email to a newly signed sponsor/exhibitor), `sponsor-nominations.md` (asking sponsors to nominate partner commissions ahead of a nominations deadline). Edition-specific notes sit at the end of each awards template under their own heading.

@@ -27,7 +27,7 @@ One invocation = one task moved to done (or as far as it can go without Jack). G
 
 4. **`projects/nomos-consultancy/contacts/`** — the introductions side. `2026-07-31-nomos-outreach-contacts.csv` holds 408 warm contacts (80 priority 1) with a `NOMOS angle` per person. The companion `.md` carries two pre-outreach checks that still have not been done: 18 people on multiple addresses, 23 whose on-file address may be dead. Do the relevant check before writing to anyone.
 
-5. **The mail**, when a task turns on what someone last said. `/email-inbox` searches Exchange for the ICPS-side history; consultancy correspondence lives in Apple Mail on the `jack@vanderpump.tech` account.
+5. **The mail**, when a task turns on what someone last said. `/email-inbox` handles both sides: its `jack-icps` profile for the ICPS-side history on Exchange, its `jack-tech` profile for consultancy correspondence on `jack@vanderpump.tech`. Keep them apart, and send consultancy mail only from `jack-tech`.
 
 Check today's date against the live approach windows before ranking. A window that passed unworked is a lost election, not a late task.
 
@@ -57,8 +57,8 @@ Route through what already exists rather than reinventing it:
 | Approach letter or chase to a commission | `content/deep-dives/approach-letter.md`, drafted via this skill's `compose.sh` (Apple Mail, `jack@vanderpump.tech`) |
 | Interview prep or write-up | `content/deep-dives/interview-structure.md` |
 | Warm introduction to a contact | The `NOMOS angle` column on the outreach CSV; same compose script |
-| Reply in an existing consultancy thread | Apple Mail on `jack@vanderpump.tech`, draft only |
-| Checking what someone last said | `/email-inbox` search across Exchange mailboxes |
+| Reply in an existing consultancy thread | `/email-inbox --account jack-tech`, draft only |
+| Checking what someone last said | `/email-inbox` search, on whichever profile holds the thread |
 | Speaker or expert research | `/find-speakers` |
 | Content HQ app change | `content-hq/CLAUDE.md` first — the app is **public** and its copy rules are strict |
 | Making a draft read human | `/humanizer` |
