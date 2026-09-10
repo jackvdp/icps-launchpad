@@ -252,15 +252,17 @@ on toLower(s)
 end toLower
 
 on parseEmailAddresses(emailString)
+	-- Note: do not name the accumulator `result`. That is AppleScript's implicit
+	-- last-command variable, and assigning to it fails with -2753.
 	set parts to my splitOnSeparators(emailString)
-	set result to {}
+	set foundAddresses to {}
 	repeat with p in parts
 		set clean to my trimWhitespace(p as string)
 		if length of clean > 0 and clean contains "@" then
-			set end of result to clean
+			set end of foundAddresses to clean
 		end if
 	end repeat
-	return result
+	return foundAddresses
 end parseEmailAddresses
 
 on splitOnSeparators(theText)
