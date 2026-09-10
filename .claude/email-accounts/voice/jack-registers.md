@@ -4,16 +4,16 @@ Derived from a read of the ICPS Exchange **Sent Items** mailbox (24,263 messages
 September 2021 to September 2026, covering internal colleagues, co-host officials, sponsors,
 speakers, partners, suppliers, delegates and applicants.
 
-This file is the **register map**. It sits alongside the "How Jack actually writes" section in
-`SKILL.md`, which describes his *warm reactive* voice in detail. That section is accurate for
-replies to people he knows. It is not the whole picture, and one of its rules is wrong as a
-blanket instruction. See "The opener correction" below.
+This file is the **register map**. It sits alongside [`jack.md`](jack.md), which describes his
+*warm reactive* voice in detail. That file is accurate for replies to people he knows. It is not
+the whole picture, and one of its rules is wrong as a blanket instruction. See "The opener
+correction" below.
 
 ---
 
-## The one correction to SKILL.md
+## The one correction to jack.md
 
-`SKILL.md` says: *"Never open with 'I hope this email finds you well'."*
+[`jack.md`](jack.md) says: *"Never open with 'I hope this email finds you well'."*
 
 That holds for **replies inside a live thread with someone he knows**. It does not hold generally.
 In outbound mail, first contact, and any email that opens a new subject, the pleasantry opener is

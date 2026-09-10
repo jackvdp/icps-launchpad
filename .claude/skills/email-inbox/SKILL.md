@@ -1,26 +1,117 @@
 ---
 name: email-inbox
-description: Email assistant for Jack's Exchange inbox. Reads mail in Apple Mail, searches filed mail across Exchange mailboxes (BSVA, Awards, Sent Items, etc.), walks through conversations, drafts replies in Apple Mail, and drafts new composes in Microsoft Outlook. Use when the user wants to triage their inbox, search past correspondence, reply to messages, send a new email, or compose one of the standard emails from a template (speaker briefing, delegate joining details, sponsor welcome, sponsor nominations ask).
-argument-hint: [optional: number of emails, search term, or "next" to continue]
-allowed-tools: Bash, Read, Write
+description: Email assistant for any mailbox configured in Apple Mail. Reads and searches mail through the apple-mail-readonly MCP, walks conversations as threads, drafts replies in Apple Mail and new composes in Outlook or Mail, and files, flags and marks mail read. Which account, which client, whose voice and where things get filed all come from an account profile in .claude/email-accounts/. Use when the user wants to triage an inbox, search past correspondence, follow a thread, reply, compose, file mail into folders, or write one of the standard emails from a template.
+argument-hint: [optional: account name, number of emails, search term, or "next" to continue]
+allowed-tools: Bash, Read, Write, Edit
 ---
 
 # Email Assistant
 
-An interactive email assistant for Jack's Exchange mailbox. Reads inbox messages via Apple Mail, walks the user through conversations, and drafts outgoing mail. **Never sends emails — only opens drafts for the user to review and send.**
+An interactive email assistant for any mailbox Apple Mail holds. It reads and
+searches through the **apple-mail-readonly MCP**, acts on mail through
+AppleScript wrappers in this folder, and **never sends anything**: every
+outgoing message is opened as a draft for the user to review and send.
 
-## Tool split: Apple Mail vs Outlook
+Everything account-specific lives outside this skill, in an **account profile**.
+The skill itself knows nothing about whose mail it is, which folders exist, or
+how the owner writes.
 
-The skill uses **two mail clients** because of AppleScript constraints on macOS:
+---
 
-| Action | Client | Script |
-|--------|--------|--------|
-| **Read** inbox / fetch messages | Apple Mail | `fetch.sh` |
-| **Search filed mail** across Exchange mailboxes (incl. Sent Items) | Apple Mail | `mailboxes.sh` |
-| **Reply** to a message (reply-all) | Apple Mail | `reply.sh` |
-| **Compose** a new email | Microsoft Outlook | `compose.sh` |
+## Step 0 — Establish the account
 
-Why the split: Apple Mail handles reading and replying cleanly (reply-all preserves the thread). Outlook handles new composes more reliably with rich HTML formatting. Use the right tool for each action.
+**Do this before anything else, every time.**
+
+```bash
+.claude/skills/email-inbox/accounts.sh
+```
+
+That prints the accounts Apple Mail has (with the UUIDs the MCP filters on) and
+the profiles already configured.
+
+**If a profile matches the request, read it in full before acting.** Its
+frontmatter fixes the account, the compose client and the voice file; its body
+carries the filing map, the triage rules and the people. Read the voice file it
+names too, before drafting anything.
+
+**If the user named an account** ("check my Tech mail", "reply from ICPS"), use
+that profile. Otherwise use the one marked `default: true`. If a request clearly
+belongs to a different account from the one in play, say so and switch rather
+than sending from the wrong address.
+
+**If no profile exists for the account in question, stop and offer to create
+one.** Do not guess at settings and carry on: the wrong account, the wrong
+compose client or a wrong filing rule all produce mail that has to be unpicked.
+Say what is missing and offer to set it up:
+
+> There is no profile for that account yet. I can create one at
+> `.claude/email-accounts/<slug>.md`. I need to know: which Apple Mail account
+> it is, the address to send from, whether new mail should compose in Outlook or
+> Apple Mail, whether a signature is already configured in the client, and which
+> folders you file into. Shall I set it up?
+
+Then write the profile from the template in `.claude/email-accounts/README.md`,
+filling the frontmatter from `accounts.sh` output and the body from the user's
+answers. Leave the body sections thin: they fill up with use.
+
+**Keep the profile current.** When the user files something somewhere the filing
+map does not cover, corrects a triage judgement, or names a colleague who owns a
+class of mail, add it to the profile. That is the point of the file. Say what
+was added in a line, do not ask permission for each row.
+
+---
+
+## The two halves of the toolkit
+
+**Reading and searching go through the MCP.** It reads Apple Mail's own index
+directly, so it is fast, returns structured results, understands threads, and
+never changes mail state.
+
+| Want | MCP tool |
+|---|---|
+| What accounts exist | `mail_list_accounts` |
+| What folders exist, with message and unread counts | `mail_list_mailboxes` |
+| Find messages by sender, subject, date, unread, attachments | `mail_search_messages` |
+| Read one message, with body and headers | `mail_read_message` |
+| Read a whole conversation in order | `mail_read_thread` |
+| What is attached to a message | `mail_list_attachments` |
+
+**Acting on mail goes through the scripts.** The MCP is read-only by design and
+will never mark, move, reply or send, so anything that changes state is a script
+in this folder.
+
+| Want | Script | Client |
+|---|---|---|
+| List accounts and profiles | `accounts.sh` | Mail |
+| Read live mailbox state, or read without the MCP | `fetch.sh` | Mail |
+| Browse and search folders without the MCP | `mailboxes.sh` | Mail |
+| Reply to a message, reply-all | `reply.sh` | Mail |
+| Start a new message | `compose.sh` | Outlook or Mail, per profile |
+| Mark read, unread, flagged, unflagged | `mark.sh` | Mail |
+| File into a folder | `move.sh` | Mail |
+
+Every script takes `--account`, which accepts a profile slug (`jack-tech`), an
+Apple Mail account name (`Exchange`), or an address. Without it they use the
+default profile.
+
+### Using the MCP well
+
+- **Filter by account.** Pass `account_uuid` from the profile on every search,
+  or results come back from every account on the machine, including personal
+  mail a work profile has no business reading.
+- **Mailbox names come back URL-encoded.** `Awards%2026%20Sponsors` is
+  `Awards 26 Sponsors`. Decode before showing them to the user, and pass the
+  decoded name to the scripts, which match what Mail displays.
+- **The MCP's `message_id` is not a Message-ID.** It is a local index rowid
+  (`mailmsg_90740`). To act on a message with `mark.sh` or `move.sh`, call
+  `mail_read_message` with `include_headers: true` and use the real
+  `Message-ID` header from the result. The scripts accept it with or without
+  its angle brackets.
+- **Search metadata first, read bodies second.** `mail_search_messages` never
+  reads bodies; pull them only for the messages that matter.
+- Junk, trash and drafts are excluded unless asked for.
+- The index can lag a few moments behind Mail. When something was just filed or
+  just arrived and the MCP does not show it, `fetch.sh` reads live state.
 
 ---
 
@@ -28,67 +119,51 @@ Why the split: Apple Mail handles reading and replying cleanly (reply-all preser
 
 ### Step 1 — Fetch the inbox
 
-Fetch all messages from the **Exchange** account inbox using the `fetch.sh` script:
+```
+mail_search_messages(account_uuid: <from profile>, mailbox_role: "inbox", limit: 30)
+```
+
+Add `unread_only: true` to see only what has not been read, `date_from` to
+bound it, `sender` or `subject` to narrow it.
+
+Falling back to the script:
 
 ```bash
-# Fetch 30 most recent emails (default)
-.claude/skills/email-inbox/fetch.sh
-
-# Fetch a specific number
-.claude/skills/email-inbox/fetch.sh --max 10
-
-# Search by subject or sender
+.claude/skills/email-inbox/fetch.sh --max 30
+.claude/skills/email-inbox/fetch.sh --account jack-tech --unread --ids
 .claude/skills/email-inbox/fetch.sh --search "COMELEC"
-
-# Paginate — skip the first 20, fetch the next 30
-.claude/skills/email-inbox/fetch.sh --offset 20 --max 30
+.claude/skills/email-inbox/fetch.sh --mailbox "Awards 26 Sponsors" --max 15
 ```
 
-**Arguments:**
-- `--max N` — maximum emails to fetch (default: 30)
-- `--search "term"` — filter by subject or sender
-- `--offset N` — skip the first N messages (for pagination)
+`--ids` adds the Message-ID of each result, which is what `mark.sh` and
+`move.sh` want.
 
-### Step 1b — Search beyond the inbox (filed mail) — `mailboxes.sh`
+### Step 1b — Search beyond the inbox
 
-`fetch.sh` only reads the Exchange **Inbox**. Jack files most mail into topic mailboxes (e.g. `BSVA`, `Nomos`, and the awards mailboxes nested under `Electoral`, such as `Electoral/Awards 26 Sponsors`). When the user asks to find past correspondence, check what was agreed, search "all my mailboxes", or look for something not in the inbox, use `mailboxes.sh`:
+Most mail is filed, so the inbox is only the live part. To find what was agreed,
+what someone last said, or anything older than the current thread:
 
-```bash
-# Discover mailboxes (full nested path + message count)
-.claude/skills/email-inbox/mailboxes.sh --list
-.claude/skills/email-inbox/mailboxes.sh --list --filter "Awards 26"
-
-# Browse a mailbox (most recent first, headers only — fast)
-.claude/skills/email-inbox/mailboxes.sh --mailbox "Awards 26 Sponsors" --max 30
-
-# Search a mailbox by subject or sender
-.claude/skills/email-inbox/mailboxes.sh --mailbox "BSVA" --search "workshop"
-
-# Read matching bodies
-.claude/skills/email-inbox/mailboxes.sh --mailbox "BSVA" --search "workshop" --full
-
-# Search sent mail (works fast even though Sent Items holds ~25k messages)
-.claude/skills/email-inbox/mailboxes.sh --mailbox "Sent Items" --search "Symposium Review"
+```
+mail_list_mailboxes(account_uuid: ..., query: "Awards 26")
+mail_search_messages(account_uuid: ..., mailbox_id: 322, query: "advert")
+mail_search_messages(account_uuid: ..., mailbox_role: "sent", query: "Symposium Review")
 ```
 
-**Arguments:**
-- `--list` — list every Exchange mailbox with nested path and message count; combine with `--filter "term"` to narrow by name
-- `--mailbox "Name"` — target a mailbox by name only (nesting is resolved automatically; all same-named mailboxes are covered)
-- `--search "term"` — match subject or sender
-- `--max N` — cap results (default: 20)
-- `--preview` / `--full` — include the first 300 / 3000 characters of each body (default is headers only; fetching bodies is the slow part, so scan headers first and pull bodies only for the messages that matter)
+The profile's **Filing map** says which folders hold what: read it rather than
+listing every mailbox and guessing. Without the MCP, `mailboxes.sh --list
+--filter "term"` then `--mailbox "Name" --search "term"` does the same job more
+slowly.
 
-**Rules for mailbox searching:**
-- **Exchange account only.** The script is hard-scoped to the Exchange account. Never search Jack's personal accounts (Personal, Pumpy, Tech) — do not write ad-hoc AppleScript to reach them.
-- **Never browse `Sent Items` or `Deleted Items` bare** — they hold 10k–25k messages; always pair them with `--search`.
-- A typical hunt: `--list --filter` to find candidate mailboxes, browse headers, then re-run with `--search`/`--full` on the promising ones.
-- Useful landmarks: awards mailboxes live under `Electoral` (`Awards 26`, `Awards 26 Delegates/Speakers/Sponsors`, plus `Awards 24/25` equivalents); partner mailboxes `BSVA`, `Buzzmint`, `Nomos` are top-level; webinar traffic is under `Electoral Webinar*` and `Smartmatic Webinar`.
+Never browse a sent or deleted folder without a search term: they run to tens of
+thousands of messages.
 
 ### Step 2 — Group into conversations
 
-After fetching, group emails into **conversations** by threading them together. Emails belong to the same conversation if they share a subject line (ignoring `Re:`, `FW:`, `Fwd:` prefixes) or are clearly part of the same exchange between the same participants.
+Group messages into conversations. The MCP does this properly:
+`mail_read_thread` takes any message and returns its whole conversation in
+order, which is better than matching subject lines by hand.
 
-Present a summary table of conversations first:
+Present a summary table first:
 
 ```
 You have **N conversations** in your inbox:
@@ -98,29 +173,38 @@ You have **N conversations** in your inbox:
 | 1 | name(s) | subject | count | date |
 ```
 
-Then note which conversations likely need attention (e.g., unread, awaiting reply, action requested) and which are resolved/informational. Before deciding that, apply Step 2b: most of what lands in the inbox is not Jack's to answer.
+Then note which need attention and which are resolved or informational. Before
+deciding that, apply Step 2b.
 
-### Step 2b — Is it actually Jack's to answer?
+### Step 2b — Is it actually the owner's to answer?
 
-**Landing in Jack's inbox does not mean it is addressed to Jack.** He is copied on a great deal of the team's mail, and the ICPS house style is to forward long chains around, so a thread can arrive with his name nowhere in it. Drafting a reply to everything in the inbox produces mail he should not be sending, and worse, mail that cuts across a colleague who already owns the thread.
+**Read the profile's `## Triage` section and apply it.** Landing in an inbox
+does not mean a message is addressed to the owner, and drafting a reply to
+everything produces mail that should not be sent, and worse, mail that cuts
+across a colleague who already owns the thread.
 
-Check three things before treating a conversation as needing a reply from him.
+The three checks that generalise across accounts:
 
-**1. Who is it addressed to?** Read the To line of the latest message, not just the sender. If Jack is only in CC, or the mail is written to a colleague (`Dear Melissa`, `Dear Ms. Ramasawmy`), the default is **no draft**. Say what was asked and who owns it, then move on.
+1. **Who is it addressed to?** Read the To line of the latest message, not just
+   the sender. If the owner is only in CC, or the mail is written to someone
+   else by name, the default is **no draft**. Say what was asked and who owns
+   it, then move on.
+2. **Has someone handed it over?** A colleague explicitly passing something on
+   makes it the owner's, whoever it was originally written to.
+3. **Whose job is the substance?** The profile's Triage and People sections say
+   what belongs to colleagues. When something is theirs, the right output is
+   usually a note of what was asked so it gets tracked, not a draft.
 
-**2. Has someone handed it to him?** A colleague explicitly passing something over makes it his, whoever the mail was originally written to. The usual forms are Tracy's "Jack can you follow up on this", Swastee's "Please advise" or "Please register him", and anything forwarded to him with a direct question attached. These are real actions.
+**Stale threads.** An inbox that is not cleared holds old conversations
+indefinitely. Check the date of the latest message. Something weeks old that has
+gone quiet is usually a dead thread, and reviving it produces an apologetic
+chase nobody wanted to send.
 
-**3. Whose job is the substance?** Delegate logistics belong to the events team, not to Jack: attendance confirmations, flight details, rooming lists, workshop sign-ups, invitation letters and joining details are recorded by **Wendy Ramasawmy**, **Devianee Nithoo**, **Swastee Ramsurrun**, **Melissa Golam** and **Anoda Payannandee**. When a delegate writes in about any of those, even warmly and at length, the right output is usually a note of what they asked for so it gets tracked, not a draft from Jack. Jack owns the website, the programme and agenda, sponsors' logistics, speakers, and anything a colleague has handed him.
-
-Worked example, 9 September 2026: Paolo Maligaya of NAMFREL wrote to Wendy Ramasawmy confirming attendance and asking for a room, a workshop place and an invitation for his National Chairperson. It was in Jack's inbox, it was unanswered, and it was easy to draft. It was still Wendy's to answer, and Jack dropped the draft. The three asks were logged in `projects/awards26/TODO.md` instead so they would not be lost.
-
-**Stale threads.** The inbox is not a to-do list and is not cleared, so old conversations sit in it indefinitely. **Check the date of the latest message.** Something weeks old that has gone quiet is usually a dead thread rather than an outstanding action, and reviving it produces an apologetic chase Jack did not want to send. Same day, the Declan O'Brien thread (Kofi Annan Foundation) was two weeks cold in the inbox; a chase was drafted and dropped.
-
-When in doubt, list it as "not obviously yours, no draft made" and let Jack ask for one. Under-drafting costs a sentence; over-drafting costs him a reply he has to unpick.
+When in doubt, list it as "not obviously yours, no draft made" and let the user
+ask. Under-drafting costs a sentence; over-drafting costs a reply they have to
+unpick.
 
 ### Step 3 — Walk through conversations one at a time
-
-Present **one conversation at a time**, showing:
 
 ```
 **Conversation 1 of N**
@@ -128,13 +212,13 @@ Present **one conversation at a time**, showing:
 **Between:** Participant names
 **Messages:** N emails (oldest date – newest date)
 
-> Summary of the conversation thread — what was discussed, what was asked, where it stands now
+> Summary of the thread: what was discussed, what was asked, where it stands
 
 **Latest message:**
 **From:** Sender <email>
 **Date:** Day, DD Month YYYY
 
-> Body preview of the most recent message
+> Body of the most recent message
 ```
 
 Then ask:
@@ -143,313 +227,199 @@ Then ask:
 > - **Reply** — I'll draft a response to the latest message
 > - **Skip** — move to the next conversation
 > - **Read all** — show every message in this thread
+> - **File it** — move it to a folder and mark it read
 > - **Search** — find a specific email
 > - Or tell me what you'd like to say and I'll draft it
 
-### Step 4 — Suggest and draft replies (Apple Mail via `reply.sh`)
+### Step 4 — Draft replies
 
-When the user asks to reply (or says what they want to say):
+1. **Read the whole thread** with `mail_read_thread` before drafting. A reply
+   written off the latest message alone repeats what was settled three messages
+   ago.
+2. **Show the draft** in a code block first.
+3. **Ask** before opening it.
+4. **Open the draft** with `reply.sh`.
 
-1. **Read the full email** if only a preview was fetched — use the search flag on `fetch.sh`
-2. **Suggest a response** — show the user a draft in a code block first, so they can review/edit before it goes into Mail
-3. **Ask for confirmation** — "Shall I open this as a draft in Mail?"
-4. **Open the draft** in Apple Mail using `reply.sh`
+```bash
+.claude/skills/email-inbox/reply.sh \
+  --message-id "<GV4P189MB3607...@...OUTLOOK.COM>" \
+  --body "Hi Tracy,
 
-If the conversation clearly needs a response and the context is obvious, proactively suggest what the reply could say. If it's ambiguous, ask the user what they'd like to convey.
+Thanks for confirming.
 
-**Reply to the most recent message** in the conversation by default. If the user wants to reply to a specific earlier message, match by that sender instead.
+Kind regards,"
+```
 
-**Prefer reply-all:** Always use `reply.sh` (which does reply-all) rather than starting a new compose, so existing recipients and thread context are preserved. The user can adjust recipients in Mail before sending.
+Matching by `--message-id` is exact. Without one, `--sender` matches the first
+(most recent) message from that sender, so add `--subject` whenever the sender
+has more than one thread in play.
 
-**Adding recipients:** Only use `--cc` to add recipients whose email address you know for certain from the conversation. Never add placeholder addresses or guess email addresses — let the user sort those out.
+Replies always go through **Apple Mail**, whatever the profile's compose client
+is: Mail holds every account, and its reply-all keeps the thread and the
+existing recipients. Use `--cc` only for addresses not already on the thread,
+and only when you know the address for certain from the conversation. Never
+invent one.
 
-### Step 5 — Draft a new email (Outlook via `compose.sh`)
+Use `--html` when the body has links or formatting, wrapping it in a `<div>`
+with `<p>` paragraphs and `<a href='...'>` links.
 
-When the user wants to start a **new conversation** (not a reply), or explicitly asks to "compose", "draft a new email", "email X with...", or similar:
+### Step 5 — Draft a new email
 
-1. Confirm recipients (To and any CC). If a recipient's address is unknown, ask before composing or pass `placeholder@example.com` and tell the user to swap it in.
-2. **Suggest the draft text** in a code block first.
-3. **Ask for confirmation** — "Open this in Outlook?"
-4. **Open the draft** in Outlook using `compose.sh`. For anything with structure (lists, links, headings, bold), use `--html` (see below).
+For a new conversation rather than a reply:
 
-If asked to "open in Mail" without further context for a *new compose*, still use Outlook — that is the right tool for composes. Clarify if unsure.
+1. Confirm recipients. If an address is unknown, ask, or pass
+   `placeholder@example.com` and say so.
+2. **Show the draft** in a code block.
+3. **Ask** before opening it.
+4. **Open the draft** with `compose.sh`.
+
+```bash
+.claude/skills/email-inbox/compose.sh \
+  --to "someone@example.org" \
+  --subject "Subject" \
+  --html \
+  --body "<p>Hi Name,</p><p>...</p><p>Kind regards,</p>"
+```
+
+The client comes from the profile's `compose_client`. Outlook renders HTML
+properly and is right for any account it holds. Apple Mail is the only option
+for accounts Outlook does not have; its drafts carry a plain-text body, so an
+`--html` body is flattened (links kept inline as URLs) and the formatted version
+is left on the clipboard for the user to paste if they want it. The script says
+so when that happens.
 
 ### Step 5b — Compose from a template
 
-Some emails recur and have a standard shape. When the request matches one of the templates in `.claude/skills/email-inbox/templates/` (see the index in that folder's `README.md` and the table under "Email templates" below), start from the template rather than drafting from scratch:
+Some emails recur. When the request matches a template in
+`.claude/skills/email-inbox/templates/` (index in that folder's `README.md`),
+start from the template rather than from scratch:
 
-1. Read the template file. It gives the recipients, subject, the bracketed fields to fill, and a ready-to-run `compose.sh --html` command.
-2. Gather the field values from the user, the event's data file, or the relevant `projects/<project>/` folder. Leave nothing bracketed.
-3. Show the filled body in a code block and ask before opening it in Outlook.
-4. Run the template's `compose.sh` command.
+1. Read the template. It gives recipients, subject, the bracketed fields, and a
+   ready-to-run `compose.sh --html` command.
+2. Fill every field from the user, the event's data file, or the relevant
+   `projects/<project>/` folder. Leave nothing bracketed.
+3. Show the filled body and ask before opening it.
 
-The wording is a starting point, not a script: adjust it to the recipient and, when drafting several from one template in a sitting, vary the skeleton.
+The wording is a starting point, not a script. Adjust it to the recipient, and
+when drafting several from one template in a sitting, vary the skeleton.
 
-### Step 6 — Style for drafts
+A profile can point at its own templates folder with a `templates:` key.
 
-- **Tone:** warm, courteous, understated British professional. Friendly without being effusive; gracious without being apologetic; direct without being blunt. Think of a well-mannered senior civil servant writing to a respected peer — polite, considered, and human. Allow small warmth cues ("it is lovely to hear from you", "warm regards from London") but avoid gushing, over-apologising, or corporate filler.
-- British English throughout (e.g. "apologise", "organisation", "whilst", "favour").
-- **No em dashes (—).** Use commas, full stops, semicolons, or parentheses instead. This applies to prose, HTML bodies, and HTML entities — do not use `&mdash;` either.
-- Concise and focused — say the thing, then stop. One clear ask or message per email.
-- Do NOT include a signature block of any kind: no name/title/organisation/phone/address lines and no closing sign-off name. End the body at "Kind regards," (or the relevant closing) and stop. Jack's signature is already configured in both Apple Mail and Outlook and is appended automatically; anything you add duplicates it.
-- **Link to the event page** whenever an email invites someone to, or references, a webinar, roundtable, or awards event. Use the live event-page URL on `electoralnetwork.org` (e.g. `https://www.electoralnetwork.org/events/<id>`), embedded with `--html` as a hyperlink on descriptive text such as "the event page" or "full details", not a bare URL. Confirm the event ID with the user or the event's `.eml`/data file if you do not already have it.
-- Start with "Dear [Name]," or "Hi [Name]," as appropriate; close with "Kind regards," (or "With kind regards," / "Warm regards from London," for warmer threads) and leave the configured signature to supply the name.
+### Step 6 — File, mark and flag
 
-#### How Jack actually writes
+Filing is how the inbox stays a list of live threads. Once a conversation is
+dealt with, offer to file it.
 
-The tone note above is the floor. The habits below are what make a draft sound like Jack rather than like a competent stranger. Match them.
+```bash
+# Mark read, by exact id
+.claude/skills/email-inbox/mark.sh --read --message-id "<id>"
 
-The habits in this section describe his **warm reactive voice**: replies, inside a live thread, to someone he knows. That is not his only register. For outbound mail, first contact, senior officials, sponsors, speakers, suppliers, declines, and internal updates, read **`writing-style.md`** in this skill folder before drafting. It maps the register to the recipient and is drawn from a five-year read of his Sent Items.
+# Flag something to come back to
+.claude/skills/email-inbox/mark.sh --flag --sender "raj@adaga.in" --subject "Booking"
 
-**React first, business second.** He opens by responding to the person, not by restating the thread. "Oh fantastic! Yes, it would be interesting to..." or "Glad you'll be there." One short line, then the substance. Do not open a reply with "I hope this email finds you well" or a summary of what they just said.
+# Mark a whole thread read
+.claude/skills/email-inbox/mark.sh --read --subject "Manila workshop" --all
 
-Note the limit of that rule: it applies to **replies**. When Jack starts a conversation, or writes to someone cold, the pleasantry opener is his most consistent habit ("I hope you're well.", "I hope this finds you well.", "I hope this message finds you well." for formal first contact). React first when there is something to react to; ask after them first when there is not.
-
-**Warm and slightly informal with people he knows.** "Hi [Name]," almost always, not "Dear". "Best," as the sign-off for anyone he has a relationship with; "Kind regards," for first contact or formal correspondence. An exclamation mark is fine where he genuinely means it ("it would be great if you can meet face to face!"), roughly one per email at most.
-
-**Enthusiasm, not positioning.** When someone offers something good, react to it plainly: "that would be fantastic", "Oh fantastic!", "Glad you'll be there." Do not convert the reaction into an institutional judgement. "Natural hazards and elections is the one I would most like to programme" is ranking a menu; "natural hazards and elections would be fantastic" is a person responding. The understated register in the tone note governs *claims*, not *warmth*: be modest about what we assert, generous about what we welcome.
-
-**Hedge your own judgements in the first person.** Opinions get "I don't think", "I'm not sure", "I suspect", not flat assertion. "It is not a subject that gets much of an airing" states a fact about the world; "a topic that I don't think often gets explored" owns it as his view. The second is what he writes, and it is also more honest, because it is an impression rather than a finding.
-
-**Do not build the case.** This is the habit most often broken. Having made a point, the temptation is to add the sentence explaining why it is a good point. Jack cuts that sentence. He will say a topic would be fantastic and stop, rather than going on to explain that it will land well with a particular audience for a particular reason. One clause of justification at most, and usually none. If a draft has a sentence beginning "It is not..." or "That takes..." or "Given...", it is probably the sentence he would delete.
-
-**Soft-pedal the ask.** Requests are floated rather than pressed: "Just a thought, but would you like us to...", "it may be worth...", "do try and find half an hour together if you can". He gives the other person an easy way to decline. He does not stack reasons or sell.
-
-**Hand over and step back.** He sets things up and then gets out of the way: "I'll leave the three of you to liaise." No offers to schedule, no follow-up-chasing language, no "let me know if you need anything".
-
-**Short paragraphs, two to four sentences.** Contractions throughout ("you'll", "they'd", "I'd", "we'd"). Plain words: "the sort of thing", "a short précis", "get a sense of". Not "leverage", "circle back", "touch base", "as per".
-
-**British idiom, lightly.** "That links to my next question", "do try and", "have a look", "worth doing". British spelling throughout.
-
-**Introductions run both ways.** When connecting two people, introduce each to the other in their own paragraph, with a one-line description of who they are and why the other should care. Address the copied party directly: "Sean/Charles, please also meet Dr Bridgett King, Associate Professor of Political Science at the University of Kentucky." Do not leave one side unexplained.
-
-**Descriptions must be verifiable.** Titles, roles and programme claims in an introduction get checked before they go in. If a claim cannot be confirmed, use a narrower one that can. Jack would rather be accurate than impressive, and an inflated title in front of the person it describes is the worst place to be wrong.
-
-**Avoid template symmetry.** When drafting two emails in one sitting, vary the openers, the transitions and the closing line. Two messages built on the same skeleton read as mail merge, and the recipients may well compare notes.
-
-#### A worked correction
-
-Jack's edit to a drafted paragraph, August 2026. The draft was to Professor Sarah Birch, who had offered four possible symposium topics.
-
-Drafted:
-
-> On the topic, natural hazards, climate change and elections is the one I would most like to programme. It is not a subject that gets much of an airing at these events, and it will land particularly well in Manila given what the commission there has to plan around. Trust in electoral administration would be my second choice if you would rather stay on firmer ground.
-
-Sent:
-
-> On the topic, natural hazards, climate change and elections would be fantastic, and a topic that I don't think often gets explored in the spaces. Trust in electoral administration would be my second choice if you would rather stay on firmer ground!
-
-Three sentences became two, and roughly forty words went. What changed:
-
-- "is the one I would most like to programme" became "would be fantastic". Warm reaction in place of institutional ranking.
-- The whole Manila justification was cut. The point had been made; the argument for it was not wanted.
-- "It is not a subject that gets much of an airing" became "a topic that I don't think often gets explored". Hedged, first person, and contracted.
-- An exclamation mark closes the light, slightly teasing line about firmer ground. That is where his exclamation marks go: on the warm line, never on the business one.
-
-The draft was not wrong, it was stiff and over-argued. When a paragraph feels well made, that is usually the signal to cut its middle sentence.
-
-Reference samples in his own voice, both intros written to connect people at a conference:
-
-```
-Hi Paul,
-
-Glad you'll be there. And thank you for the LEO Survey link, I hadn't seen the 2024 report. Just a thought, but would you like us to put it on the Network site? It could sit on our articles page here, with a short précis and a link through to the full report.
-
-That report also links to my next question. You may remember Sean Evins and Charles Symons of NOMOS, both copied in, from the June webinar. Your survey work is just the sort of thing they'd want to share on their platform.
-
-They're at the conference this week, so if you have time it would be great to meet them face to face. I'll leave the three of you to liaise.
-
-Best,
+# File it, checking first
+.claude/skills/email-inbox/move.sh --to "Awards 26 Sponsors" --message-id "<id>" --dry-run
+.claude/skills/email-inbox/move.sh --to "Awards 26 Sponsors" --message-id "<id>"
 ```
 
-```
-Hi Bridgett,
+Rules for filing:
 
-Oh fantastic! Yes, it would be interesting to get a sense of the election climate after the EAC announcement.
-
-As you're there, could I also introduce Sean Evins and Charles Symons of NOMOS, who are cc'd. ICPS is a convening partner. They're building a verified professional network and knowledge-sharing platform for electoral officials and bodies, and are looking for thought leaders to contribute to it. You may know Sean already, who has been in the US election space for years, on the Hill and then at Twitter and Meta.
-
-Sean/Charles, please also meet Dr Bridgett King, Associate Professor of Political Science at the University of Kentucky. Bridgett researches election administration and the voting experience, leads a track at the Elections and Voting Information Center, and has spoken on several of our webinars over the years.
-
-As you're all at the conference this week, it would be great if you can meet face to face!
-
-Best,
-```
-
-**Run the drafts through `/humanizer` before showing them.** Jack asks for this routinely. The tells that keep surfacing in his mail: generic positive closers ("it would be worth doing", "I think you'd all get something from it"), copula avoidance ("will have a presence at" for "is at"), brochure phrasing in partner descriptions, and the same sentence skeleton reused across two emails.
+- **Read the profile's Filing map first** and use a folder it names. If nothing
+  fits, ask where it should go, then add the answer to the map.
+- **Confirm before moving.** Marking read is cheap to undo; moving is not, and
+  a wrong destination scatters mail with no undo beyond moving it back.
+- **`--dry-run` first** whenever the match is by sender or subject rather than
+  by message id. It lists what would move and moves nothing.
+- **`--all` moves every match.** Without it, only the most recent one moves.
+  Use it for a whole thread, never as a default.
+- Destinations match on the leaf name. If a name exists in two places the script
+  says so and asks for the full path (`Electoral/Awards 26 Sponsors`).
+- Folder names are matched exactly, typos and all. Several older mailboxes are
+  misspelled in Mail itself; match what is there rather than correcting it.
 
 ### Step 7 — Continue through the inbox
 
-After each conversation is handled (replied or skipped), move to the next one. Keep a running count so the user knows their progress.
+After each conversation is handled, move to the next. Keep a running count so
+the user knows their progress. If they say "skip all" or "just show me the
+list", present the summary table again.
 
-If the user says "skip all" or "just show me the list", present the summary table again.
+---
+
+## Style for drafts
+
+**The voice comes from the profile.** Read the file its `voice:` key names
+before drafting anything, and follow it. What follows applies whatever the
+account.
+
+- **No em dashes.** Use commas, full stops, semicolons or parentheses. This
+  covers HTML bodies: no `&mdash;` either.
+- **Signatures follow the profile's `signature:` key.** `client` means one is
+  configured in the mail client and appended automatically, so the draft ends at
+  "Kind regards," with no name, title or contact block; anything added
+  duplicates it. `none` means the draft signs off in full.
+- Concise and focused. One clear ask per email.
+- Show the draft in a code block before opening it, so the user can change it.
+- **Link to the event page** in any email that invites someone to, or
+  references, a webinar, roundtable or awards event: the live
+  `electoralnetwork.org/events/<id>` URL, hyperlinked on descriptive text such
+  as "the event page", never a bare URL.
+- **Run drafts through `/humanizer`** before showing them.
 
 ---
 
 ## Scripts
 
-All scripts are in `.claude/skills/email-inbox/`.
+All scripts are in `.claude/skills/email-inbox/` and share `lib.sh`, which
+resolves the account and reads the profile. Each has its usage in a header
+comment.
 
-| Script | Purpose | Mail client |
-|--------|---------|-------------|
-| `fetch.sh` | Fetch inbox emails (with optional search, pagination) | Apple Mail |
-| `mailboxes.sh` | List and search Exchange mailboxes beyond the inbox (filed mail, Sent Items) | Apple Mail |
-| `reply.sh` | Open a reply-all draft | Apple Mail |
-| `compose.sh` | Open a new compose draft | Microsoft Outlook |
+| Script | Purpose |
+|---|---|
+| `accounts.sh` | List Apple Mail accounts (name, UUID, addresses) and configured profiles |
+| `fetch.sh` | Read a mailbox live: `--max`, `--search`, `--offset`, `--unread`, `--ids`, `--mailbox` |
+| `mailboxes.sh` | `--list [--filter]` to see folders; `--mailbox "Name" [--search] [--preview\|--full] [--ids]` to browse one |
+| `reply.sh` | Reply-all draft in Apple Mail: `--message-id` or `--sender`/`--subject`, `--body`, `--cc`, `--html` |
+| `compose.sh` | New draft: `--to`, `--subject`, `--body`, `--cc`, `--bcc`, `--html`, `--attach`, `--client` |
+| `mark.sh` | `--read`/`--unread`/`--flag`/`--unflag`, matched by `--message-id` or `--sender`/`--subject`, plus `--all`, `--dry-run` |
+| `move.sh` | `--to "Folder"`, matched by `--message-id` or `--sender`/`--subject`, plus `--from-mailbox`, `--all`, `--dry-run` |
 
-### Get the full email body
+### HTML in Outlook composes
 
-To read the full body of a specific email, use the search flag:
+**Always use `--html`** for any email with structure: lists, links, bold,
+headings. Outlook's `content` property is HTML, so plain-text bullets render as
+one run-on paragraph. Real structure needs real tags.
 
-```bash
-.claude/skills/email-inbox/fetch.sh --search "sender@example.com" --max 1
-```
+Plain-text mode is safe for simple prose: newlines become `<br>`, so paragraphs
+and blank lines survive. It never produces bullets or bold.
 
-### Reply to an email — `reply.sh` (Apple Mail)
-
-Use the `reply.sh` bash script. It wraps the AppleScript and accepts arguments, so you never need to write AppleScript inline.
-
-**Usage:**
-
-```bash
-# Basic reply (always reply-all to preserve CC recipients)
-.claude/skills/email-inbox/reply.sh \
-  --sender "email@example.com" \
-  --body "Dear X,
-
-Thank you for your email.
-
-"
-
-# Reply with CC
-.claude/skills/email-inbox/reply.sh \
-  --sender "email@example.com" \
-  --body "Dear X,
-
-Thank you for your email.
-
-" \
-  --cc "colleague@example.com"
-
-# Multiple CC recipients
-.claude/skills/email-inbox/reply.sh \
-  --sender "email@example.com" \
-  --body "Dear X, ..." \
-  --cc "person1@example.com" \
-  --cc "person2@example.com"
-```
-
-**Arguments:**
-- `--sender` (required) — email address or name to match the message to reply to
-- `--subject` (optional) — subject text to narrow the match. The script replies to the **first** message matching the sender, which is the most recent one, so pass a subject fragment whenever the sender has more than one thread in the inbox (Tracy usually does)
-- `--body` (required) — the reply text to paste into the message (supports multiline)
-- `--cc` (optional, repeatable) — CC recipient email address
-- `--html` (optional) — treat `--body` as HTML content, enabling rich text with clickable links, bold, etc.
-
-**Use `--html` mode** when the body contains links. Wrap the body in a `<div>` with paragraphs (`<p>`) and use `<a href='...'>` for links. Example:
-
-```bash
-.claude/skills/email-inbox/reply.sh \
-  --sender "email@example.com" \
-  --html \
-  --body "<div><p>Dear X,</p><p>Please visit <a href='https://electoralnetwork.org'>electoralnetwork.org</a> for details.</p></div>"
-```
-
-**How it works under the hood:**
-- Generates a temporary AppleScript at `/tmp/mail-reply.applescript`
-- Opens a reply window in Apple Mail on the Exchange account
-- Adds any CC recipients
-- Uses `Cmd+Up` to move cursor to top (preserving the thread)
-- Pastes the body text via the clipboard
-- **Never sends** — only opens the draft
-
-**IMPORTANT constraints (baked into the script):**
-- Do NOT set the `content` property of the reply — this overwrites the thread
-- Do NOT use `Cmd+A` — this can select and replace the thread
-- Uses `delay 2` to let the reply window fully load before pasting
-
-### Compose a new email — `compose.sh` (Outlook)
-
-Use the `compose.sh` bash script for **new emails** (not replies). It opens a draft in Microsoft Outlook.
-
-**Usage:**
-
-```bash
-# Basic new compose
-.claude/skills/email-inbox/compose.sh \
-  --to "tracy.drewett@parlicentre.co.uk" \
-  --subject "Updated comms plan" \
-  --body "Hi Tracy,
-
-Quick note...
-
-Jack
-"
-
-# Multiple recipients + CC
-.claude/skills/email-inbox/compose.sh \
-  --to "tracy.drewett@parlicentre.co.uk" \
-  --to "cnithoo@parlistudies.org" \
-  --cc "colleague@example.com" \
-  --subject "Subject" \
-  --body "Body..."
-
-# Recipient unknown — use placeholder, tell user to swap it in
-.claude/skills/email-inbox/compose.sh \
-  --to "placeholder@example.com" \
-  --subject "..." \
-  --body "..."
-```
-
-**Arguments:**
-- `--to` (required, repeatable) — recipient email address
-- `--subject` (required) — email subject line
-- `--body` (required) — email body (plain text or HTML, see below)
-- `--cc` (optional, repeatable) — CC recipient
-- `--html` (optional) — treat `--body` as HTML
-- `--attach` (optional, repeatable) — path to a file to attach (quote paths with spaces)
-
-#### HTML formatting in Outlook composes
-
-**Always use `--html`** for any email with structure: lists, links, bold/italic, headings. Outlook's `content` property is HTML, so plain-text bullets ("- item") and manual line breaks do NOT survive as structure — a "-" list in plain text renders as one run-on paragraph. Real structure needs real tags: `<ul><li>`, `<p>`, `<b>`, `<a>`.
-
-(Plain-text mode is safe for simple prose: `compose.sh` converts newlines to `<br>` so paragraphs and blank lines are preserved. But it never produces proper bullets or bold — use `--html` for those.)
-
-The script wraps your `--body` in this shell:
+The script wraps `--body` in this shell, so supply only the inner HTML:
 
 ```html
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset='UTF-8'>
-  <style>
-    p { margin: 0 0 14px 0; }
-    p:last-child { margin-bottom: 0; }
-    ul, ol { margin: 0 0 14px 0; padding-left: 22px; }
-    li { margin: 0 0 4px 0; }
-  </style>
-</head>
 <body style='font-family: Calibri, Arial, sans-serif; font-size: 15px;'>
   <!-- your --body goes here -->
 </body>
-</html>
 ```
 
-So you only need to supply the **inner HTML** for the body. Use:
+with `p { margin: 0 0 14px 0 }`, `p:last-child { margin-bottom: 0 }`, and
+margins on `ul`/`ol`/`li`.
 
-- `<p>...</p>` for paragraphs. **Paragraph spacing is handled by the wrapper**, so just write consecutive `<p>` siblings and they render with a proper gap. Do **not** add `<p>&nbsp;</p>` spacers or inline `style='margin...'`, because the wrapper already supplies the margin and those extras double it up. (This wrapper previously set `p { margin: 0 }`, which collapsed multi-paragraph drafts into one solid block; fixed 17 Aug 2026. If you ever see a cramped draft again, check that rule first rather than papering over it with spacers.)
-- `<b>...</b>` or `<strong>...</strong>` for bold
-- `<i>...</i>` or `<em>...</em>` for italic
-- `<ol><li>...</li>...</ol>` for numbered lists
-- `<ul><li>...</li>...</ul>` for bullet lists (do not wrap `<li>` content in `<p>`; the wrapper spaces list items already)
-- `<a href='https://...'>link text</a>` for links (use single quotes inside HTML attributes to avoid AppleScript escape issues)
-- `<br>` for a soft line break inside a paragraph
-- `&amp;` for `&`, `&lt;` and `&gt;` for angle brackets, `&nbsp;` for non-breaking space
-- **Never** use `&mdash;` or `—`. Use commas, full stops, semicolons, or parentheses instead. Use a hyphen `-` only if a separator is genuinely needed.
+- `<p>` for paragraphs. **Spacing is handled by the wrapper**, so write
+  consecutive `<p>` siblings and they space properly. Do not add
+  `<p>&nbsp;</p>` spacers or inline `style='margin...'`: the wrapper already
+  supplies the margin and extras double it up. (The wrapper previously set
+  `p { margin: 0 }`, which collapsed multi-paragraph drafts into one solid
+  block; fixed 17 Aug 2026. If a draft ever looks cramped again, check that
+  rule first rather than papering over it with spacers.)
+- `<b>` or `<strong>`, `<i>` or `<em>`, `<ol><li>`, `<ul><li>` (do not wrap
+  `<li>` content in `<p>`), `<a href='...'>`, `<br>`.
+- `&amp;`, `&lt;`, `&gt;`, `&nbsp;`. **Never** `&mdash;` or an em dash.
+- **Use single quotes inside HTML attributes.** The body is passed to
+  AppleScript wrapped in double quotes, so single quotes avoid escaping.
 
-**Quote handling:** the body is wrapped in double quotes when passed to AppleScript. Use **single quotes** inside HTML attributes (`href='...'`, `style='...'`) so you do not need to escape them.
-
-**Example — a structured Outlook compose with HTML:**
+Example:
 
 ```bash
 .claude/skills/email-inbox/compose.sh \
@@ -457,58 +427,77 @@ So you only need to supply the **inner HTML** for the body. Use:
   --subject "Awards categories, proposed revamp" \
   --html \
   --body "<p>Hi Tracy,</p>
-<p>Quick proposal on the awards categories. New slate of 10 below:</p>
+<p>Quick proposal on the awards categories. New slate below:</p>
 <ol>
-<li><p><b>International Electoral Cooperation Award</b>, renamed from International Institutional Engagement.</p></li>
-<li><p><b>Electoral Conflict Management Award</b>, unchanged.</p></li>
-<li><p><b>Voter-Centred Design Award</b>, renamed from Electoral Ergonomy.</p></li>
+<li><b>International Electoral Cooperation Award</b>, renamed from International Institutional Engagement.</li>
+<li><b>Electoral Conflict Management Award</b>, unchanged.</li>
 </ol>
-<p>Full details at <a href='https://electoralnetwork.org/admin/comms-plan'>the comms plan dashboard</a>.</p>
-<p>Jack</p>"
+<p>Full details at <a href='https://electoralnetwork.org/admin/comms-plan'>the comms plan dashboard</a>.</p>"
 ```
 
-**How `compose.sh` works under the hood:**
-- Generates a temporary AppleScript at `/tmp/outlook-compose.applescript`
-- Tells Outlook to create a new outgoing message with subject, body, To, and CC set as properties
-- Opens the draft window (`open newMessage`) and activates Outlook
-- **Never sends** — only opens the draft
+### How the reply script works
+
+- Generates an AppleScript at `/tmp/mail-reply.applescript`
+- Opens a reply window on the resolved account, adds any CC recipients
+- Moves the cursor to the top with `Cmd+Up`, then pastes the body
+- **Never sends**
+
+Constraints baked into the script, do not undo them:
+
+- Do **not** set the `content` property of a reply: it overwrites the thread.
+- Do **not** use `Cmd+A`: it can select and replace the thread.
+- The `delay 2` after opening the reply window lets it load before pasting.
 
 ---
 
 ## Email templates
 
-Reusable emails live in `.claude/skills/email-inbox/templates/`, one file per template, grouped by area. `templates/README.md` holds the index, the shared conventions, and how to add a new one. Each file follows the same skeleton: when to use, recipients, subject, fields to substitute, a `compose.sh --html` body, notes, and (for awards) edition-specific notes under their own heading.
+Reusable emails live in `.claude/skills/email-inbox/templates/`, one file per
+template, grouped by area. `templates/README.md` holds the index, the shared
+conventions, and how to add a new one.
 
 | Template | Use it when | File |
 |---|---|---|
-| Speaker briefing | Sending confirmed webinar or roundtable speakers their logistics about a week out (thanks, bio and slides requests, agenda with per-speaker timings, Zoom details) | `templates/webinars/speaker-briefing.md` |
-| Delegate briefing | Sending registered delegates their joining details, usually the day before, via the admin team (Devianee, cnithoo@parlistudies.org) | `templates/webinars/delegate-briefing.md` |
-| Sponsor welcome | First logistics email to a newly signed Awards sponsor or exhibitor (point-of-contact intro plus package recap) | `templates/awards/sponsor-welcome.md` |
-| Sponsor nominations ask | Asking a sponsor to nominate the partner commissions they work with ahead of a nominations deadline (never themselves) | `templates/awards/sponsor-nominations.md` |
+| Speaker briefing | Sending confirmed webinar or roundtable speakers their logistics about a week out | `templates/webinars/speaker-briefing.md` |
+| Delegate briefing | Sending registered delegates their joining details, usually the day before | `templates/webinars/delegate-briefing.md` |
+| Sponsor welcome | First logistics email to a newly signed Awards sponsor or exhibitor | `templates/awards/sponsor-welcome.md` |
+| Sponsor nominations ask | Asking a sponsor to nominate the partner commissions they work with | `templates/awards/sponsor-nominations.md` |
 
 See Step 5b for the workflow.
 
 ---
 
-## Key Rules
+## Key rules
 
-1. **NEVER send an email.** Only open draft windows for the user to review and send manually.
-2. **Always use the Exchange account** — `account "Exchange"`, mailbox `"Inbox"` (handled by the scripts).
-2b. **Do not draft a reply to everything in the inbox.** Jack is CC'd on most of the team's mail and the inbox holds stale threads. Draft only where he is actually addressed, where a colleague has handed him the thread, or where the substance is his. See **Step 2b**; delegate logistics are the events team's, not his.
-3. **Replies → Apple Mail via `reply.sh`. New composes → Outlook via `compose.sh`.** Do not mix.
-4. **Do not include a signature or a closing sign-off name** in drafted emails — end at "Kind regards," and stop. Jack's full signature is configured in both clients and is appended automatically; adding one duplicates it.
-5. **Always reply all** — `reply.sh` uses `reply to all` so existing CC recipients are preserved. Use `--cc` only for *additional* recipients not already on the thread.
-6. **Preserve the email thread** in replies — use the clipboard-paste method with `Cmd+Up` then `Cmd+V`. Never use `set content of` (overwrites thread). Never use `Cmd+A` (selects and can replace thread).
-7. **Use `delay 2`** after `reply msg opening window yes with reply to all` — gives the reply window time to fully load before pasting.
-8. **Show the draft text to the user first** in a code block before opening it in Mail or Outlook, so they can request changes.
-9. **Match sender by email address** for precision when replying (e.g., `"Caroline.Fawkes@vi.gov"` not just `"Caroline"`).
-10. **British English** throughout all drafted responses, in the warm-but-understated tone described in "Style for drafts". Read **"How Jack actually writes"** in that section before drafting anything: react first, soft-pedal the ask, hand over and step back, and vary the skeleton between emails written in the same sitting. **Never use em dashes (—)** in drafts — use commas, full stops, or parentheses instead.
-11. **Use `--html` in Outlook composes** for anything with structure (lists, links, bold, headings). Plain-text "-" bullets render as one run-on paragraph in Outlook; bulleted emails must use `<ul><li><p>...</p></li></ul>`. Plain-text mode preserves paragraphs and blank lines only.
-12. **Link to the event page** in any email that invites someone to or references a webinar, roundtable, or awards event — embed the live `electoralnetwork.org/events/<id>` URL as a hyperlink on descriptive text (e.g. "the event page"), never a bare URL.
+1. **Never send an email.** Only open drafts for the user to review and send.
+2. **Establish the account first.** Read its profile, and its voice file, before
+   acting. No profile means offer to create one, not carry on with guesses.
+3. **One account at a time.** Every MCP search takes the profile's
+   `account_uuid`; every script takes its account. Do not reach into other
+   accounts, and do not write ad-hoc AppleScript that ignores the scoping.
+4. **Do not draft a reply to everything.** Apply the profile's Triage section.
+   See Step 2b.
+5. **Replies through Apple Mail, new composes through the profile's client.**
+6. **Always reply-all.** `reply.sh` preserves existing CC recipients; `--cc` is
+   for additional ones only.
+7. **Preserve the thread in replies.** Clipboard paste after `Cmd+Up`. Never
+   `set content of`, never `Cmd+A`.
+8. **Show the draft first**, in a code block.
+9. **Match by Message-ID** where one is available; by sender plus subject
+   otherwise.
+10. **Confirm before moving mail**, and `--dry-run` any move matched by sender
+    or subject.
+11. **Follow the profile's voice file and signature setting**, and never use em
+    dashes.
+12. **Keep the profile updated** as filing rules, people and triage judgements
+    come to light.
 
 ## Notes
 
-- Apple Mail and Outlook must be running (or will be launched by the relevant script).
-- The first run of either may trigger a macOS permission prompt for Terminal to control the app.
-- For very large inboxes, keep `--max` reasonable to avoid slow execution.
-- If a script times out, reduce `--max` or skip body content extraction.
+- Apple Mail must be running, or the scripts will launch it. Outlook likewise
+  for composes that use it.
+- The first run may trigger a macOS permission prompt for the terminal to
+  control Mail or Outlook, and the MCP may need Full Disk Access
+  (`mail_permissions_check` diagnoses it).
+- For very large mailboxes keep `--max` reasonable, and prefer the MCP, which
+  queries an index rather than walking messages.
