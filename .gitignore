@@ -23,3 +23,6 @@ projects/
 
 # sync-claude-mcp.py: personal list of MCP servers to leave alone
 .mcp-sync-ignore
+
+# Claude Code worktrees (full repo checkouts, local only)
+.claude/worktrees/

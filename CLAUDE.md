@@ -58,6 +58,7 @@ Note: `projects/` is gitignored (local working area), so its contents are not co
 | Build a large audience/delegate contact list (100-500) for a mail merge | `/find-bulk-contacts` |
 | Mail-merge a template through Outlook to a CSV list | `/send-bulk-emails` |
 | Make AI-sounding text read more human | `/humanizer` |
+| Start/stop a Claude session on this Mac that's reachable from the phone (Remote Control) | `/remote-session` |
 
 Skills load their own context when invoked — don't pre-load awards or website detail into the conversation by reading files speculatively. Use the skill.
 
