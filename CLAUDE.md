@@ -44,6 +44,7 @@ Note: `projects/` is gitignored (local working area), so its contents are not co
 |------|-------|
 | Awards programme: nominations, judging, ceremony, winners, post-event close-out, categories, venue/co-host details | `/awards-admin` |
 | Pick and execute the most timely Awards 26 to-do item (TODO.md + Philippines dashboard) | `/awards-task` |
+| Pick and execute the most timely NOMOS consultancy task: deep-dive pipeline, approach letters, content programme, one-to-one introductions | `/nomos-task` |
 | General ICPS / Network admin: emails, invitations, briefs, press releases, training proposals, webinars, roundtables | `/electoral-network-admin` |
 | Website development (Next.js, MongoDB, components, project structure) | `/website-dev` |
 | Email for the 2026 delegate-acquisition comms plan | `/comms-email` |
