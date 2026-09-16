@@ -14,7 +14,9 @@ export const AWARDS_EVENT_ID: string | null = '69938de4f4f23e0fef2e3129';
 export const NOMINATIONS_PERIOD = {
     edition: '22nd International Electoral Awards',
     opens: '2025-12-01T00:00:00.000Z',   // end of previous year
-    closes: '2026-09-15T23:59:59.000Z',  // nominations deadline, giving the judges runway before the ceremony
+    // Hard close for the portal. The published deadline was 15 September 2026, but late
+    // nominations are still accepted, so the form stays open until the eve of the ceremony.
+    closes: '2026-11-30T23:59:59.000Z',
 };
 
 export const isNominationsOpen = (now: Date = new Date()): boolean =>
