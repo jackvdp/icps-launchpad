@@ -53,7 +53,15 @@ mailbox name and has to be passed through exactly.
 ## Triage
 
 Everything here is addressed to Jack directly, so the CC-trap that governs the
-ICPS inbox does not apply. The volume is low and the threads are his.
+ICPS inbox does not apply. The volume is low and the threads are his, so a
+sweep here is mostly reply-or-file.
+
+Two rules still hold. A thread whose last message is Jack's is a park, not a
+chase: approaches to commissions go quiet for weeks and that is normal. And an
+approach sitting in the inbox with no reply is usually a deliberate reminder to
+follow up on his own schedule, so park it rather than filing it into
+`Folders/Nomos – Election Contacts`; the per-election CSVs in
+`projects/nomos-consultancy/` are where chase timing is actually decided.
 
 Keep the two sides apart. This is a private consultancy, separate from the
 ICPS/NOMOS partnership, and neither should appear in the other's

@@ -12,6 +12,8 @@ create one before doing anything else.
 ├── README.md          this file
 ├── jack-icps.md       profile (default)
 ├── jack-tech.md       profile
+├── state/             per-account sweep state, local only, not committed
+│   └── jack-icps.tsv      watermark, parked ids, awaiting-send ids
 └── voice/
     ├── jack.md            how Jack writes
     └── jack-registers.md  register by recipient, from a read of his Sent Items
@@ -60,13 +62,30 @@ and, where a heading says so, updates them as it learns.
   skill matches against it before filing anything with `move.sh`, and adds a
   row when the user files something somewhere new. Only fill in what is
   actually used; `mailboxes.sh --list` shows everything that exists.
+- **`### Files on sight`**, under the filing map — classes of mail that need no
+  reply and no question about where they go, so a sweep can file them in the
+  batch. The more of these a profile lists, the less a run has to ask.
 - **`## Triage`** — who else's mail arrives here, what is not the owner's to
-  answer, how stale a thread has to be before it is dead. This is what stops
-  the skill drafting replies to the whole inbox.
+  answer, and what an old message left in the inbox means. This is what stops
+  the skill drafting replies to the whole inbox, and what stops it filing away
+  mail the owner is keeping in front of himself on purpose.
 - **`## People`** — colleagues and regular correspondents, with addresses and
   what each owns.
 - **`## Notes`** — anything else worth knowing: standing conventions, links to
   project folders, quirks of this account.
+
+## State
+
+`state/<slug>.tsv` is written by `sweep.sh` and holds three kinds of row:
+
+| Row | Meaning |
+|---|---|
+| `swept <timestamp> <mailbox>` | the watermark. Later mail is "new" |
+| `parked <id> <date> <note>` | a message the owner keeps in the inbox on purpose. Never touched, never re-proposed. Pruned automatically once it leaves the inbox |
+| `awaiting <id> <date> <note>` | a reply was drafted and the message filed, but the send was never confirmed. Ages out after two weeks |
+
+It is local working state, not configuration, and is not committed. Deleting it
+costs the parked list, so the next sweep raises those messages again.
 
 ## Adding a profile
 
@@ -105,7 +124,8 @@ One line on what this account is for.
 
 ## Triage
 
-Who else's mail lands here and what is not theirs to answer.
+Who else's mail lands here, what is not theirs to answer, and what an old
+message still sitting in the inbox means.
 
 ## People
 

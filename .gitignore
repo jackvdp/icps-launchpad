@@ -26,3 +26,6 @@ projects/
 
 # Claude Code worktrees (full repo checkouts, local only)
 .claude/worktrees/
+
+# email-inbox sweep state (watermark, parked ids): local working state
+.claude/email-accounts/state/

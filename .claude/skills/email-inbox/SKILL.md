@@ -1,7 +1,7 @@
 ---
 name: email-inbox
-description: Email assistant for any mailbox configured in Apple Mail. Reads and searches mail through the apple-mail-readonly MCP, walks conversations as threads, drafts replies in Apple Mail and new composes in Outlook or Mail, and files, flags and marks mail read. Which account, which client, whose voice and where things get filed all come from an account profile in .claude/email-accounts/. Use when the user wants to triage an inbox, search past correspondence, follow a thread, reply, compose, file mail into folders, or write one of the standard emails from a template.
-argument-hint: [optional: account name, number of emails, search term, or "next"; no argument triages the default account's inbox]
+description: Email assistant for any mailbox configured in Apple Mail. Sweeps an inbox in one pass: works out what is new, what actually needs a reply from the owner, files everything that does not, and leaves deliberate reminders untouched. Reads and searches through the apple-mail-readonly MCP, drafts replies in Apple Mail and new composes in Outlook or Mail, and files, flags and marks mail in batches. Which account, which client, whose voice and where things get filed all come from an account profile in .claude/email-accounts/. Use when the user wants to clear or triage an inbox, search past correspondence, follow a thread, reply, compose, file mail into folders, or write one of the standard emails from a template.
+argument-hint: [optional: account name, "new", "all", a number, or a search term; no argument sweeps the default account's inbox]
 allowed-tools: Bash, Read, Write, Edit
 ---
 
@@ -16,26 +16,48 @@ Everything account-specific lives outside this skill, in an **account profile**.
 The skill itself knows nothing about whose mail it is, which folders exist, or
 how the owner writes.
 
+## What a run is for
+
+The inbox is not a to-do list. A run exists to get it back to holding only two
+things: **threads waiting on a reply the owner owes**, and **messages the owner
+is deliberately keeping in front of himself**. Everything else is filed.
+
+So a default run is a **sweep**, not a tour:
+
+1. work out what has arrived since the last sweep,
+2. sort every conversation into **reply**, **file** or **park**,
+3. show the whole plan as one table and take **one** confirmation,
+4. file the whole file-pile in a single batch,
+5. then spend the time on the handful that need drafting.
+
+Do not walk the inbox one conversation at a time asking what to do with each.
+That is the slow path, and it is only right when the user asks for it
+(`/email-inbox walk`) or when the reply pile is what is left.
+
 ## Invoked with no arguments
 
-`/email-inbox` on its own means **triage the default account's inbox**: work
-Step 0, then Step 1, then walk the conversations from Step 3. The default
-account is the profile whose frontmatter says `default: true`.
+`/email-inbox` on its own means **sweep the default account's inbox**: Step 0,
+then Steps 1 to 6. The default account is the profile whose frontmatter says
+`default: true`.
 
 Say which account is in play in the first line of the reply, so a wrong default
-is caught before anything is drafted:
+is caught before anything is drafted or moved:
 
 > Reading **jack-icps** (Exchange, jack.vanderpump@publicpolicyexchange.co.uk).
+> 14 conversations, 6 new since the last sweep on 11 September, 3 parked.
 
 An argument changes the starting point, not the account rules:
 
 | Argument | What it means |
 |---|---|
-| *(none)* | triage the default account's inbox |
-| a profile slug or account name (`jack-tech`) | triage that account's inbox instead |
-| a number (`10`) | triage, capped at that many messages |
-| any other text (`COMELEC`, `sponsor invoices`) | search rather than triage, on the default account |
-| `next` | continue the walk from where the last session stopped |
+| *(none)* | sweep the default account's inbox |
+| `new` | sweep, but only what arrived since the last sweep |
+| `all` | sweep, including parked messages (offers to unpark) |
+| `walk` | the old one-at-a-time tour of every conversation |
+| `park` | park the conversation just discussed, as a reminder |
+| a profile slug or account name (`jack-tech`) | sweep that account instead |
+| a number (`10`) | sweep, capped at that many messages |
+| any other text (`COMELEC`, `sponsor invoices`) | search rather than sweep, on the default account |
 
 Anything ambiguous between an account name and a search term is an account
 name; say so and offer the search if that was not the intent.
@@ -106,13 +128,14 @@ in this folder.
 
 | Want | Script | Client |
 |---|---|---|
+| Run a whole triage pass: file, mark and park in one batch | `sweep.sh` | Mail |
 | List accounts and profiles | `accounts.sh` | Mail |
 | Read live mailbox state, or read without the MCP | `fetch.sh` | Mail |
 | Browse and search folders without the MCP | `mailboxes.sh` | Mail |
 | Reply to a message, reply-all | `reply.sh` | Mail |
 | Start a new message | `compose.sh` | Outlook or Mail, per profile |
-| Mark read, unread, flagged, unflagged | `mark.sh` | Mail |
-| File into a folder | `move.sh` | Mail |
+| Mark one message read, unread, flagged, unflagged | `mark.sh` | Mail |
+| File one message into a folder | `move.sh` | Mail |
 
 Every script takes `--account`, which accepts a profile slug (`jack-tech`), an
 Apple Mail account name (`Exchange`), or an address. Without it they use the
@@ -141,28 +164,205 @@ default profile.
 
 ## Workflow
 
-### Step 1 — Fetch the inbox
+### Step 1 — Load state, then fetch what is new
 
-```
-mail_search_messages(account_uuid: <from profile>, mailbox_role: "inbox", limit: 30)
-```
-
-Add `unread_only: true` to see only what has not been read, `date_from` to
-bound it, `sender` or `subject` to narrow it.
-
-Falling back to the script:
+State first. It says when the inbox was last swept, and which messages the
+owner is deliberately keeping in it.
 
 ```bash
-.claude/skills/email-inbox/fetch.sh --max 30
-.claude/skills/email-inbox/fetch.sh --account jack-tech --unread --ids
-.claude/skills/email-inbox/fetch.sh --search "COMELEC"
-.claude/skills/email-inbox/fetch.sh --mailbox "Awards 26 Sponsors" --max 15
+.claude/skills/email-inbox/sweep.sh --state
 ```
 
-`--ids` adds the Message-ID of each result, which is what `mark.sh` and
-`move.sh` want.
+- `swept <timestamp>` — the watermark. Anything received after it is **new**.
+- `parked <id>` — a deliberate reminder. Never proposed, never touched.
+- `awaiting <id>` — a reply was drafted and the message filed, but the send was
+  never confirmed. Worth a line in the closing report, nothing more.
 
-### Step 1b — Search beyond the inbox
+Then read the inbox:
+
+```
+mail_search_messages(account_uuid: <from profile>, mailbox_role: "inbox", limit: 40)
+```
+
+Add `date_from` set to the watermark for `new`. Fetch the whole inbox for a
+plain sweep, because filing decisions need the old messages too, and let the
+parked list rather than the date decide what to leave alone.
+
+Falling back to the script when the MCP is unavailable or its index is stale:
+
+```bash
+.claude/skills/email-inbox/fetch.sh --max 40 --ids
+.claude/skills/email-inbox/fetch.sh --account jack-tech --unread --ids
+```
+
+`--ids` gives the Message-ID of each result, which is what every action wants.
+**Collect ids as you go**: a sweep plan is built from them, and going back for
+them afterwards costs another pass over the mailbox.
+
+### Step 2 — Sort every conversation into reply, file or park
+
+Group messages into conversations first (`mail_read_thread` takes any message
+and returns its whole conversation in order, which beats matching subject lines
+by hand). Then put every conversation in exactly one of three buckets.
+
+**R — Reply.** The owner owes someone an answer. All three have to hold:
+
+1. it is **addressed to him**, not just copied to him, or a colleague has
+   **handed it over** ("Jack can you follow up on this", "Please advise", a
+   forward with a direct question attached),
+2. the substance is **his** rather than a colleague's, by the profile's Triage
+   and People sections,
+3. the **last message is not his**. If he sent it, the ball is with them, and
+   that is a park, not a reply.
+
+**F — File.** Nothing is owed and the thread is done with. The usual shapes:
+
+- an answer he asked for and has now got,
+- a thank-you or acknowledgement that closes the thread,
+- CC-only traffic where a colleague owns it and has it in hand,
+- confirmations, registrations and delegate logistics the events team record,
+- notifications, newsletters, receipts, calendar acceptances.
+
+Each one needs a destination from the profile's **Filing map**. If nothing in
+the map fits, do not invent a folder: leave it in the inbox, say so in the
+table, and ask once at the end of the run where that class of mail should go.
+Then add the answer to the map.
+
+**P — Park.** Leave it exactly as it is, unread status included. Park covers:
+
+- **anything already in the parked list**. Do not re-propose it, do not list it
+  by name. One line at the top of the run ("3 parked, untouched") is the whole
+  report,
+- **the owner's own reminders**: something sitting in the inbox that he has
+  clearly chosen to keep in front of himself,
+- **waiting on them**: he sent the last message and is expecting a reply,
+- **anything old and quiet**. An old message still in the inbox is there on
+  purpose. It is not an overdue action and it is not rubbish. Do not draft a
+  chase, do not file it away, do not ask about it. Leave it and park it.
+
+The last point matters more than it looks. An inbox that is not cleared fills
+with mail that is neither live nor dead: it is the owner's own memory. Filing
+it is worse than leaving it, because it disappears from the one place he looks.
+
+**The default for anything ambiguous is park.** Under-acting costs a line in a
+table. Over-acting costs a reply he has to unpick or a thread he has to find
+again.
+
+### Step 3 — Show the plan, take one confirmation
+
+One table for the whole run, in bucket order, then one question. Never one
+question per message.
+
+```
+**jack-icps** (Exchange) — 14 conversations, 6 new since 11 September, 3 parked and untouched.
+
+**Needs you (3)**
+
+| # | From | Subject | Age | Why |
+|---|------|---------|-----|-----|
+| 1 | Crescenda Babiera | Conference programme advert | 1d | asks you to confirm the 28 Sept call |
+
+**Filing (8)**
+
+| # | From | Subject | Age | To |
+|---|------|---------|-----|----|
+| 4 | Cesar Flores | RE: delegate details | 2d | Awards 26 Delegates — Swastee has it |
+
+**Parking (3)** — left untouched
+
+| # | From | Subject | Age | Why |
+|---|------|---------|-----|-----|
+| 12 | Declan O'Brien | Kofi Annan Foundation | 3w | quiet, your reminder to keep |
+
+> File the 8, park the 3, and draft the 3 replies?
+```
+
+Keep the "why" column to a handful of words. The table is the reasoning; do not
+also write it out in prose.
+
+If the user changes a call ("no, Cesar's is mine", "don't file the Laxton one"),
+move that row and carry on. If it is a change of rule rather than a one-off,
+put it in the profile before the run ends.
+
+### Step 4 — Sweep: file and park in one batch
+
+`move.sh` and `mark.sh` act on one message per run of Mail. Filing eight that
+way is eight walks of the inbox. `sweep.sh` takes a plan, resolves every
+destination first, walks the inbox once, and does the lot in a few seconds.
+
+Write the plan to the scratchpad as tab-separated lines:
+
+```
+<message-id>	file	Awards 26 Sponsors
+<message-id>	file	Awards 26 Delegates
+<message-id>	file-unread	Electoral Press
+<message-id>	park		his own reminder to chase the floorplan
+<message-id>	read
+```
+
+Then run it:
+
+```bash
+.claude/skills/email-inbox/sweep.sh --plan /path/to/sweep.tsv --dry-run
+.claude/skills/email-inbox/sweep.sh --plan /path/to/sweep.tsv
+```
+
+- `file` marks read and files. `file-unread` files without marking read, for
+  something worth reading later in its folder.
+- `park` touches the message in no way at all. It only records the id, so later
+  runs stay quiet about it.
+- `read` and `flag` leave the message in the inbox.
+- A destination that does not exist, or an ambiguous leaf name, **fails the
+  whole plan before anything moves**. Fix the row and re-run.
+- `--dry-run` when any destination in the plan is one this account has not
+  filed to before. Otherwise the confirmation in Step 3 is the check, and a
+  second one just slows the run down.
+
+Parked ids survive between runs, and are dropped automatically once the message
+leaves the inbox.
+
+### Step 5 — Work the reply pile
+
+Only now, and only the R bucket. For each, in order:
+
+1. **Read the whole thread** with `mail_read_thread`. A reply written off the
+   latest message alone repeats what was settled three messages ago.
+2. **Draft it** to the profile's voice, run it through `/humanizer`, and show
+   it in a code block.
+3. **Open the draft** with `reply.sh` once the user is happy (see *Draft
+   replies* below).
+4. **File the original** as the draft opens, with an `awaiting` row:
+
+```
+<message-id>	awaiting	Awards 26 Sponsors	replied re 28 Sept call
+```
+
+`awaiting` files the message exactly as `file` does, and records that a reply
+was drafted but not seen sent. That keeps the inbox honest: the thread is dealt
+with from its point of view, and the state file carries the loose end.
+
+If the user would rather keep a replied-to thread in the inbox until they have
+actually sent, use `read` instead and say so. Do not decide that silently.
+
+Draft several replies in one pass where the user is happy to review them
+together: show all of them, then open them one after another. Reviewing three
+drafts at once is faster than three rounds of show-ask-open.
+
+### Step 6 — Close the run
+
+Three lines, no more:
+
+```
+Filed 8, parked 3, 3 replies drafted and waiting in Mail for you to send.
+Left in the inbox: the 3 you're replying to, plus the 3 parked.
+Nothing matched a filing rule for the Eventbrite receipts — where should those go?
+```
+
+Then add anything learned to the profile: a new filing row, a correction to a
+triage call, a colleague who owns a class of mail. Say what was added in a
+line, do not ask permission for each one.
+
+### Searching beyond the inbox
 
 Most mail is filed, so the inbox is only the live part. To find what was agreed,
 what someone last said, or anything older than the current thread:
@@ -181,85 +381,12 @@ slowly.
 Never browse a sent or deleted folder without a search term: they run to tens of
 thousands of messages.
 
-### Step 2 — Group into conversations
+A sent-folder search is also how to settle an `awaiting` row when the user asks
+whether a reply ever went.
 
-Group messages into conversations. The MCP does this properly:
-`mail_read_thread` takes any message and returns its whole conversation in
-order, which is better than matching subject lines by hand.
+### Draft replies
 
-Present a summary table first:
-
-```
-You have **N conversations** in your inbox:
-
-| # | From | Subject | Messages | Latest |
-|---|------|---------|----------|--------|
-| 1 | name(s) | subject | count | date |
-```
-
-Then note which need attention and which are resolved or informational. Before
-deciding that, apply Step 2b.
-
-### Step 2b — Is it actually the owner's to answer?
-
-**Read the profile's `## Triage` section and apply it.** Landing in an inbox
-does not mean a message is addressed to the owner, and drafting a reply to
-everything produces mail that should not be sent, and worse, mail that cuts
-across a colleague who already owns the thread.
-
-The three checks that generalise across accounts:
-
-1. **Who is it addressed to?** Read the To line of the latest message, not just
-   the sender. If the owner is only in CC, or the mail is written to someone
-   else by name, the default is **no draft**. Say what was asked and who owns
-   it, then move on.
-2. **Has someone handed it over?** A colleague explicitly passing something on
-   makes it the owner's, whoever it was originally written to.
-3. **Whose job is the substance?** The profile's Triage and People sections say
-   what belongs to colleagues. When something is theirs, the right output is
-   usually a note of what was asked so it gets tracked, not a draft.
-
-**Stale threads.** An inbox that is not cleared holds old conversations
-indefinitely. Check the date of the latest message. Something weeks old that has
-gone quiet is usually a dead thread, and reviving it produces an apologetic
-chase nobody wanted to send.
-
-When in doubt, list it as "not obviously yours, no draft made" and let the user
-ask. Under-drafting costs a sentence; over-drafting costs a reply they have to
-unpick.
-
-### Step 3 — Walk through conversations one at a time
-
-```
-**Conversation 1 of N**
-**Subject:** Subject line
-**Between:** Participant names
-**Messages:** N emails (oldest date – newest date)
-
-> Summary of the thread: what was discussed, what was asked, where it stands
-
-**Latest message:**
-**From:** Sender <email>
-**Date:** Day, DD Month YYYY
-
-> Body of the most recent message
-```
-
-Then ask:
-
-> **What would you like to do?**
-> - **Reply** — I'll draft a response to the latest message
-> - **Skip** — move to the next conversation
-> - **Read all** — show every message in this thread
-> - **File it** — move it to a folder and mark it read
-> - **Search** — find a specific email
-> - Or tell me what you'd like to say and I'll draft it
-
-### Step 4 — Draft replies
-
-1. **Read the whole thread** with `mail_read_thread` before drafting. A reply
-   written off the latest message alone repeats what was settled three messages
-   ago.
+1. **Read the whole thread** before drafting.
 2. **Show the draft** in a code block first.
 3. **Ask** before opening it.
 4. **Open the draft** with `reply.sh`.
@@ -287,7 +414,7 @@ invent one.
 Use `--html` when the body has links or formatting, wrapping it in a `<div>`
 with `<p>` paragraphs and `<a href='...'>` links.
 
-### Step 5 — Draft a new email
+### Draft a new email
 
 For a new conversation rather than a reply:
 
@@ -312,7 +439,7 @@ for accounts Outlook does not have; its drafts carry a plain-text body, so an
 is left on the clipboard for the user to paste if they want it. The script says
 so when that happens.
 
-### Step 5b — Compose from a template
+### Compose from a template
 
 Some emails recur. When the request matches a template in
 `.claude/skills/email-inbox/templates/` (index in that folder's `README.md`),
@@ -329,10 +456,10 @@ when drafting several from one template in a sitting, vary the skeleton.
 
 A profile can point at its own templates folder with a `templates:` key.
 
-### Step 6 — File, mark and flag
+### One-off filing, marking and flagging
 
-Filing is how the inbox stays a list of live threads. Once a conversation is
-dealt with, offer to file it.
+`sweep.sh` is for a run. For a single correction afterwards, or for a thread
+being dealt with outside a sweep, the single-message scripts are simpler:
 
 ```bash
 # Mark read, by exact id
@@ -349,12 +476,10 @@ dealt with, offer to file it.
 .claude/skills/email-inbox/move.sh --to "Awards 26 Sponsors" --message-id "<id>"
 ```
 
-Rules for filing:
+Rules for filing, whichever script does it:
 
 - **Read the profile's Filing map first** and use a folder it names. If nothing
   fits, ask where it should go, then add the answer to the map.
-- **Confirm before moving.** Marking read is cheap to undo; moving is not, and
-  a wrong destination scatters mail with no undo beyond moving it back.
 - **`--dry-run` first** whenever the match is by sender or subject rather than
   by message id. It lists what would move and moves nothing.
 - **`--all` moves every match.** Without it, only the most recent one moves.
@@ -363,14 +488,48 @@ Rules for filing:
   says so and asks for the full path (`Electoral/Awards 26 Sponsors`).
 - Folder names are matched exactly, typos and all. Several older mailboxes are
   misspelled in Mail itself; match what is there rather than correcting it.
+- Moving is the one thing here with no undo beyond moving it back. Within a run
+  the Step 3 table is the confirmation; outside one, ask.
 
-### Step 7 — Continue through the inbox
+To park or unpark by hand:
 
-After each conversation is handled, move to the next. Keep a running count so
-the user knows their progress. If they say "skip all" or "just show me the
-list", present the summary table again.
+```bash
+.claude/skills/email-inbox/sweep.sh --park "<id>" --note "chase after the board meets"
+.claude/skills/email-inbox/sweep.sh --unpark "<id>"
+```
 
----
+### The slow walk, when it is asked for
+
+`/email-inbox walk`, or any request to go through the inbox one at a time,
+means the conversation-by-conversation tour:
+
+```
+**Conversation 1 of N**
+**Subject:** Subject line
+**Between:** Participant names
+**Messages:** N emails (oldest date - newest date)
+
+> Summary of the thread: what was discussed, what was asked, where it stands
+
+**Latest message:**
+**From:** Sender <email>
+**Date:** Day, DD Month YYYY
+
+> Body of the most recent message
+```
+
+Then ask:
+
+> **What would you like to do?**
+> - **Reply** - I'll draft a response to the latest message
+> - **Skip** - move to the next conversation
+> - **Read all** - show every message in this thread
+> - **File it** - move it to a folder and mark it read
+> - **Park it** - leave it in the inbox and stop raising it
+> - Or tell me what you'd like to say and I'll draft it
+
+Keep a running count so the user knows their progress. If they say "skip all"
+or "just show me the list", go back to the Step 3 table.
 
 ## Style for drafts
 
@@ -402,6 +561,7 @@ comment.
 
 | Script | Purpose |
 |---|---|
+| `sweep.sh` | The batch script. `--plan FILE` files, marks and parks a whole run in one pass; `--state` shows the watermark, parked and awaiting; `--park`/`--unpark` by id; `--dry-run` |
 | `accounts.sh` | List Apple Mail accounts (name, UUID, addresses) and configured profiles |
 | `fetch.sh` | Read a mailbox live: `--max`, `--search`, `--offset`, `--unread`, `--ids`, `--mailbox` |
 | `mailboxes.sh` | `--list [--filter]` to see folders; `--mailbox "Name" [--search] [--preview\|--full] [--ids]` to browse one |
@@ -499,21 +659,32 @@ See Step 5b for the workflow.
 3. **One account at a time.** Every MCP search takes the profile's
    `account_uuid`; every script takes its account. Do not reach into other
    accounts, and do not write ad-hoc AppleScript that ignores the scoping.
-4. **Do not draft a reply to everything.** Apply the profile's Triage section.
-   See Step 2b.
-5. **Replies through Apple Mail, new composes through the profile's client.**
-6. **Always reply-all.** `reply.sh` preserves existing CC recipients; `--cc` is
-   for additional ones only.
-7. **Preserve the thread in replies.** Clipboard paste after `Cmd+Up`. Never
-   `set content of`, never `Cmd+A`.
-8. **Show the draft first**, in a code block.
-9. **Match by Message-ID** where one is available; by sender plus subject
-   otherwise.
-10. **Confirm before moving mail**, and `--dry-run` any move matched by sender
-    or subject.
-11. **Follow the profile's voice file and signature setting**, and never use em
+4. **Sweep, do not tour.** One classification pass, one table, one
+   confirmation, one batch. The conversation-by-conversation walk is for when
+   it is asked for.
+5. **Do not draft a reply to everything.** Apply the profile's Triage section.
+   Copied-in is not addressed-to; a colleague's job is not the owner's.
+6. **A reply is owed only if the last message is not his.** If he sent it, he is
+   waiting, and that is a park.
+7. **Never touch a parked message.** Not moved, not marked, not raised again.
+   Old and quiet means kept on purpose, not forgotten: park it rather than
+   filing it or chasing it.
+8. **File everything that is settled**, to a folder the Filing map names. No
+   rule in the map means ask once at the end of the run, then add the answer.
+9. **Replies through Apple Mail, new composes through the profile's client.**
+10. **Always reply-all.** `reply.sh` preserves existing CC recipients; `--cc` is
+    for additional ones only.
+11. **Preserve the thread in replies.** Clipboard paste after `Cmd+Up`. Never
+    `set content of`, never `Cmd+A`.
+12. **Show drafts first**, in a code block, and file the original as the draft
+    opens.
+13. **Match by Message-ID** where one is available; by sender plus subject
+    otherwise.
+14. **A sweep plan fails whole or not at all.** A bad destination stops it
+    before anything moves; fix the row rather than splitting the run.
+15. **Follow the profile's voice file and signature setting**, and never use em
     dashes.
-12. **Keep the profile updated** as filing rules, people and triage judgements
+16. **Keep the profile updated** as filing rules, people and triage judgements
     come to light.
 
 ## Notes
@@ -525,3 +696,7 @@ See Step 5b for the workflow.
   (`mail_permissions_check` diagnoses it).
 - For very large mailboxes keep `--max` reasonable, and prefer the MCP, which
   queries an index rather than walking messages.
+- Per-account state (the sweep watermark, the parked list, awaiting rows) lives
+  in `.claude/email-accounts/state/<slug>.tsv`. It is local working state and
+  is not committed. Deleting it loses the parked list, which means the next
+  sweep raises those messages again; nothing else breaks.

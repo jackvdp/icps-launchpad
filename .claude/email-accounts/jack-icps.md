@@ -33,9 +33,10 @@ are for reading rather than typing.
 
 | Mailbox | What goes there |
 |---|---|
-| `Electoral/Awards 26` | 22nd Awards (Manila 2026), general: programme, agenda, venue, COMELEC |
+| `Electoral/Awards 26` | 22nd Awards (Manila 2026), general: programme, agenda, venue, COMELEC. Also **nominations**: there is no `Awards 26 Nominations` mailbox, though Awards 24 and Awards 25 both have one |
 | `Electoral/Awards 26 Sponsors` | sponsor and exhibitor threads: bookings, invoices, logos, adverts, stand logistics |
 | `Electoral/Awards 26 Speakers` | speaker invitations, confirmations, bios, slides |
+| `Electoral/Awards 26 Judges` | Awarding Committee: invitations, acceptances, judging packs, scores |
 | `Electoral/Awards 26 Delegates` | delegate registrations, joining details, room and workshop requests |
 | `Electoral/Awards 25`, `Electoral/Awards 24 *` | closed editions, with the same split by sponsors / speakers / nominations |
 | `Electoral/Electoral Webinars/*` | webinar traffic, one mailbox per series. `Smartmatic Webinar` for that series |
@@ -54,6 +55,26 @@ several older mailboxes are misspelled in Mail itself (`Elecotral Judges`,
 `Elecotral Sponsors`, `Awards 24 Logisitics`): match the name as it exists,
 do not correct it.
 
+### Files on sight
+
+These need no reply from Jack and no question about where they go. They belong
+in the file bucket of a sweep, confirmed once with everything else rather than
+one at a time.
+
+| What arrives | Where it goes |
+|---|---|
+| Delegate registrations, attendance confirmations, rooming and flight details, invitation-letter requests | `Awards 26 Delegates` (log the ask in `projects/awards26/TODO.md` if it needs doing) |
+| Sponsor invoices, purchase orders, logos, adverts and stand logistics, once handled | `Awards 26 Sponsors` |
+| Speaker bios, headshots, slides and confirmations, once acknowledged | `Awards 26 Speakers` |
+| Nominations emailed in rather than submitted through the form, once receipt is confirmed | `Awards 26`. Check the entry is actually in the nominations database before confirming it: query the `nominations` collection in MongoDB (fields are US-spelled, `nomineeOrganization`) |
+| Webinar registrations and joining-detail traffic | the matching `Electoral Webinars/*` mailbox |
+| Membership enquiries a colleague has answered | `Electoral membership` |
+| Media enquiries and press-release traffic, once out | `Electoral Press` |
+| Calendar acceptances, delivery receipts, newsletters, platform notifications | read and file to the thread's own folder, or leave read in the inbox if there is no folder |
+
+Anything on this list that carries a direct question to Jack is a reply, not a
+file. The list is about the routine version of each.
+
 ## Triage
 
 **Landing in this inbox does not mean it is addressed to Jack.** He is copied
@@ -62,7 +83,7 @@ chains around, so a thread can arrive with his name nowhere in it. Drafting a
 reply to everything produces mail he should not send, and worse, mail that cuts
 across a colleague who already owns the thread.
 
-Three checks before treating a conversation as needing a reply.
+Four checks before treating a conversation as needing a reply.
 
 **1. Who is it addressed to?** Read the To line of the latest message, not just
 the sender. If Jack is only in CC, or the mail is written to a colleague
@@ -91,16 +112,60 @@ unanswered, and it was easy to draft. It was still Wendy's to answer, and Jack
 dropped the draft. The three asks were logged in `projects/awards26/TODO.md`
 instead so they would not be lost.
 
-**Stale threads.** The inbox is not a to-do list and is not cleared, so old
-conversations sit in it indefinitely. Check the date of the latest message.
-Something weeks old that has gone quiet is usually a dead thread rather than an
-outstanding action, and reviving it produces an apologetic chase Jack did not
-want to send. Same day, the Declan O'Brien thread (Kofi Annan Foundation) was
-two weeks cold in the inbox; a chase was drafted and dropped.
+**A letter request that arrives through Tracy is Jack's, whoever the delegate
+is.** The delegate-logistics rule above has one standing exception: when Tracy
+forwards a thread with "Can you do the letters jack?", the letters are his even
+though the delegate side of the thread belongs to Anoda or Wendy. Worked
+example, 15 September 2026: the Georgia CEC thread sat between Anoda and Keti
+Karenashvili throughout, and Tracy handed the nominal invitations to Jack.
+He wrote them and sent them to Keti direct, CC Anoda, and left the spouse
+accommodation with Anoda.
 
-When in doubt, list it as "not obviously yours, no draft made" and let Jack ask
-for one. Under-drafting costs a sentence; over-drafting costs him a reply he
-has to unpick.
+**Invitation and visa letters split by who is asking.** A delegate asking for
+one is Wendy's, per the 9 September steer. A **sponsor** asking for one is
+Jack's, because sponsor logistics are his and he issues these letters himself
+from `projects/awards26/letters/_base-invitation-2026.docx` (Ferran Martinez,
+the 18 COMELEC regional directors). He needs the delegates' names, job titles
+and passport spellings before he can write them. Worked example, 14 September
+2026: Rajendra Daga (A Daga / Elecmatics) asked for a visa letter on his
+sponsor thread, and Jack answered it rather than handing it on.
+
+**4. Is the ball already in his court?** If the last message in the thread is
+Jack's, he is waiting on them, not the other way round. Park it. Do not draft a
+chase unless he asks for one.
+
+**Old mail in this inbox is deliberate, not forgotten.** Jack does not clear
+his inbox, and he leaves things in it on purpose: reminders, threads he wants
+in front of him, things he means to come back to. Something weeks old and quiet
+is one of those. It is not an overdue action and it is not rubbish.
+
+So: do not chase it, do not file it away, do not ask about it each run. Park
+it, which records the id and keeps later runs quiet about it, and leaves the
+message and its unread status exactly as they are. Filing one of these is worse
+than leaving it, because it vanishes from the one place he looks.
+
+Worked example, 9 September 2026: the Declan O'Brien thread (Kofi Annan
+Foundation) was two weeks cold in the inbox. A chase was drafted and dropped.
+Under the current rules it is a park: it is sitting there because Jack put it
+there.
+
+When in doubt, park it and say in one line that it was not obviously his. Let
+Jack ask for a draft. Under-drafting costs a sentence; over-drafting costs him
+a reply he has to unpick, and filing something he was keeping costs him a hunt
+through fifteen folders.
+
+## Standing answers
+
+Answers Jack has already given to questions that recur. Use them in drafts
+without asking again.
+
+| Question | Answer | Since |
+|---|---|---|
+| A sponsor asks for the delegate list early | Reply CC Tracy, saying the list is still coming together and **Tracy will send it nearer the time**. Jack does not send it himself | 16 Sep 2026 (Miru) |
+| A sponsor asks whether their hotel rooms are paid for | **Yes, sponsor rooms are covered.** They go on the rooming list and COMELEC books them | 16 Sep 2026 (Laxton) |
+| Delegates' spouses: is accommodation covered? | **Yes**, spouse accommodation is covered | 16 Sep 2026 (Georgia CEC) |
+| How many nominations do we need? | **60 in total** for Awards 26 | 16 Sep 2026 (Tracy) |
+| A judge or Awarding Committee member asks whether ICPS will fund their flights | **No.** Airfare is not covered, business class or otherwise. Accommodation at the venue is covered. Jack may offer to explore an exception case by case, as he did for Toby James | 19 Sep 2026 (Nasim Zaidi, Toby James) |
 
 ## People
 
@@ -124,5 +189,9 @@ Delegate logistics land with the five names above, not with Jack. See Triage.
   awards event links to the live event page at
   `https://www.electoralnetwork.org/events/<id>`, hyperlinked on descriptive
   text ("the event page", "full details"), never a bare URL.
+- **A Message-ID from the MCP is not always the one Mail matches on.** Mail remailers
+  (rpost.net, seen on `secretariatse@tse.go.cr`) rewrite it, so `mail_read_message`
+  returns a header the scripts cannot find. When a `move.sh`/`sweep.sh` row comes back
+  MISSING, fall back to `--sender` plus `--subject` with `--dry-run`. (19 Sep 2026)
 - Awards work is tracked in `projects/awards26/`; the `/awards-task` skill
   works that list. Partnership work is in `projects/nomos/`.

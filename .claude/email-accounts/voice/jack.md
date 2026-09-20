@@ -170,3 +170,22 @@ keep surfacing in his mail: generic positive closers ("it would be worth doing",
 "I think you'd all get something from it"), copula avoidance ("will have a
 presence at" for "is at"), brochure phrasing in partner descriptions, and the
 same sentence skeleton reused across two emails.
+
+## Corrections from sent mail, September 2026
+
+Drafts compared against what Jack actually sent, 14 to 16 September 2026.
+
+- **Don't guess at why a colleague's figure is different.** To Tracy on
+  nominations, the draft said "I suspect the 23 is what the team have logged
+  by hand rather than what has actually come through the site." Jack cut it
+  and sent the number alone. Internally, give the fact and leave the reasons
+  out, especially when the reason would point at the events team.
+- **Don't announce a refusal when you can offer something instead.** To SEC
+  Bihar, "We are not moving the published deadline" read as aggressive. The
+  sent version skips the refusal and gives the concession: "Send it through
+  to me by Tuesday 22 September and I will add it to the pack."
+- **Keep counts short.** A reply to Tracy listing four categories with their
+  counts, plus a Bihar reminder, came back trimmed to two categories and no
+  reminder. Answer the question asked; leave out extra context unless it
+  changes what she does next.
+- **Check weekdays.** A draft said "Monday 22 September"; it is a Tuesday.
