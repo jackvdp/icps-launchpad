@@ -37,7 +37,7 @@ Three sections, in this order.
 ## What does not go here
 
 - Done items, in any form.
-- Waiting on someone else with nothing for Jack to do. If silence needs a chase, the item is the chase, with its date ("Chase the IEC on Wed 30 Sep"). Open questions put to Charles or the NOMOS team belong in the Status section of `projects/nomos-consultancy/CLAUDE.md`.
+- Waiting on someone else with nothing for Jack to do. If silence needs a chase, the item is the chase, with its date ("Chase the IEC on Wed 30 Sep"). Open questions put to Charles or the NOMOS team belong in the "Standing facts and decisions" section of `projects/nomos-consultancy/CLAUDE.md`.
 - Outreach history: who a commission was written to, when, the chases, their reply, whether they agreed. That is `content/deep-dives/outreach-log.csv`, shown on Content HQ's `/elections` page.
 - Per-election status for rows not yet written to. That is the CSVs' `Status` column.
 - Working rules and lessons (for example, check Sent Items before recording anything as unsent). Those go in this skill.

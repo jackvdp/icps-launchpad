@@ -1,6 +1,6 @@
 ---
 name: awards-task
-description: Pick the most timely Awards 26 (Manila) to-do item and do it — end to end, with any emails drafted for review. Works from the Philippines event dashboard (Neon Postgres) as the source of truth, with the awards26 TODO list and its satellites supplying the detail; ranks tasks by urgency and proximity to the event, confirms the pick with Jack, executes it, ticks it off the dashboard and deletes it from the TODO list. Use whenever Jack asks "what's next for the awards", "do an awards task", "work through the awards to-do list", "what should I be chasing", or names a specific awards task to action (e.g. "do the Rayudu welcome email"). Also use for chasing overdue replies from COMELEC, Tracy, sponsors or speakers.
+description: Pick the most timely Awards 26 (Manila) to-do item and do it — end to end, with any emails drafted for review. Works from the Philippines event dashboard (Neon Postgres) as the source of truth, with the awards26 TODO list and the workshop SOW supplying the detail; ranks tasks by urgency and proximity to the event, confirms the pick with Jack, executes it, ticks it off the dashboard and deletes it from the TODO list. Use whenever Jack asks "what's next for the awards", "do an awards task", "work through the awards to-do list", "what should I be chasing", or names a specific awards task to action (e.g. "do the Rayudu welcome email"). Also use for chasing overdue replies from COMELEC, Tracy, sponsors or speakers.
 argument-hint: [optional: a specific task to do, e.g. "rayudu welcome email"]
 ---
 
@@ -23,15 +23,15 @@ Start with the dashboard. Everything else fills it in.
 
 2. `projects/awards26/CLAUDE.md` — event dates, venue status, packages, key people. The dashboard says *what* is outstanding; this says *what is true about the event*. Do not trust dates memorised from elsewhere, a wrong-dates template has already circulated once.
 
-3. `projects/awards26/TODO.md` — Claude's own open work only: drafts, letters and website changes that are outstanding and Claude's to do. It is not a history and not a waiting list; the mail and the dashboard are the record, and what is waiting on whom lives in the dashboard rows' `details`.
+3. `projects/awards26/TODO.md` — reminders of what can't be done yet, each with its date or blocker ("Held"), plus a "Backlog to clear" of doable items that predate that rule (29 September 2026). Backlog items are ordinary candidates for this run; a Held item becomes one once its date arrives or its blocker clears. It is not a history and not a waiting list: the mail and the dashboard are the record, and what is waiting on whom lives in the dashboard rows' `details`.
 
-4. The satellites TODO.md points to: `nominations-website-status.md` (nominations/Postmark), `bsva-workshop-sow.md` (workshop organisation). Skim both every time — a satellite can hide something that outranks everything on either list (the Postmark file once concealed a production email outage), and you cannot know that without looking.
+4. `projects/awards26/bsva-workshop-sow.md` — the workshop organisation to-dos. Skim it every time; it can hold something that outranks everything on the other lists.
 
 Also check today's date against the event: **29 November – 3 December 2026, Manila**. Weeks-to-event drives the ranking below.
 
 ## Step 2 — Rank
 
-Walk the dashboard's nine sections in order and ask what each one needs at this many weeks out. That is the frame. The rows' `details`, TODO.md and the satellites then tell you which of those are already moving, already promised, or already blocked.
+Walk the dashboard's nine sections in order and ask what each one needs at this many weeks out. That is the frame. The rows' `details`, TODO.md and the workshop SOW then tell you which of those are already moving, already promised, or already blocked.
 
 Score the merged list with this priority order, and be ready to defend the pick in one sentence each:
 
@@ -77,6 +77,6 @@ The dashboard is updated first, because it is what the next invocation trusts.
    - **Never insert a new row** (Jack, 28 September 2026). Work the template did not anticipate goes into the `details` of the nearest row in the right section.
    - **Changing a row's task text or deleting a row needs Jack's explicit OK**, including fixing the leftover template wording. Ask, then do it in the same session rather than logging it for later.
 
-2. **TODO.md** — only items that are outstanding **and Claude's to do**. Waiting-on-others, meeting times, colleagues' actions and Jack's own decisions do not go here; they go in the dashboard `details`, or nowhere if the mail already records them. **Delete the item** once it is done; do not tick it and leave it. While you are in the file, delete anything finished or not Claude's. Where the two lists disagreed in Step 1, correct whichever was stale.
+2. **TODO.md** — **delete the item** once it is done; do not tick it and leave it. Add only what can't be done yet, one line under "Held" with its date or blocker; if it can be done now, do it instead. Never add to "Backlog to clear". Waiting-on-others, meeting times, colleagues' actions and Jack's own decisions do not go here; they go in the dashboard `details`, or nowhere if the mail already records them. Where the two lists disagreed in Step 1, correct whichever was stale.
 
 3. **Report** — close with: what was done, where any drafts are waiting (which app, which window), what was ticked or noted on the dashboard, what was removed from or added to TODO.md, and what the next-ranked task is, so the following invocation has a head start.
