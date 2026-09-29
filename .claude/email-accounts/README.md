@@ -15,8 +15,7 @@ create one before doing anything else.
 ├── state/             per-account sweep state, local only, not committed
 │   └── jack-icps.tsv      watermark, parked ids, awaiting-send ids
 └── voice/
-    ├── jack.md            how Jack writes
-    └── jack-registers.md  register by recipient, from a read of his Sent Items
+    └── jack.md            how Jack writes: the floor, openers, register by recipient, habits, corrections
 ```
 
 These files are committed. They hold working addresses and filing conventions,

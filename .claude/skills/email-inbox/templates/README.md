@@ -31,4 +31,4 @@ Reusable emails for the `/email-inbox` skill. Each file has the same shape: when
 
 ## Adding a template
 
-Copy the section headings from an existing file, put it under `webinars/` or `awards/` (or a new subfolder if it fits neither), and add a row to the index above and to the table in `SKILL.md`.
+Copy the section headings from an existing file, put it under `webinars/` or `awards/` (or a new subfolder if it fits neither), and add a row to the index above.
