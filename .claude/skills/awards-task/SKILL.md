@@ -1,6 +1,6 @@
 ---
 name: awards-task
-description: Pick the most timely Awards 26 (Manila) to-do item and do it — end to end, with any emails drafted for review. Works from the Philippines event dashboard (Neon Postgres) as the source of truth, with the awards26 TODO list and its satellites supplying the detail; ranks tasks by urgency and proximity to the event, confirms the pick with Jack, executes it, and ticks it off both lists. Use whenever Jack asks "what's next for the awards", "do an awards task", "work through the awards to-do list", "what should I be chasing", or names a specific awards task to action (e.g. "do the Rayudu welcome email"). Also use for chasing overdue replies from COMELEC, Tracy, sponsors or speakers.
+description: Pick the most timely Awards 26 (Manila) to-do item and do it — end to end, with any emails drafted for review. Works from the Philippines event dashboard (Neon Postgres) as the source of truth, with the awards26 TODO list and its satellites supplying the detail; ranks tasks by urgency and proximity to the event, confirms the pick with Jack, executes it, ticks it off the dashboard and deletes it from the TODO list. Use whenever Jack asks "what's next for the awards", "do an awards task", "work through the awards to-do list", "what should I be chasing", or names a specific awards task to action (e.g. "do the Rayudu welcome email"). Also use for chasing overdue replies from COMELEC, Tracy, sponsors or speakers.
 argument-hint: [optional: a specific task to do, e.g. "rayudu welcome email"]
 ---
 
@@ -8,7 +8,7 @@ argument-hint: [optional: a specific task to do, e.g. "rayudu welcome email"]
 
 One invocation = one task moved to done (or as far as it can go without Jack). The job: gather the live to-do picture, pick the most timely item, confirm it with Jack, execute it, and write the result back so both lists stay true.
 
-**Hard rule: never send an email.** Draft and open for review only. Everything else that leaves the machine (website deploys, LinkedIn posts) also needs Jack's explicit go-ahead first. On the dashboard you may tick rows off and add new ones as part of Step 5; changing or removing an existing row needs Jack's OK.
+**Hard rule: never send an email.** Draft and open for review only. Everything else that leaves the machine (website deploys, LinkedIn posts) also needs Jack's explicit go-ahead first. On the dashboard you may tick rows off and write status notes into a row's `details` as part of Step 5. **Do not add new rows** (Jack, 28 September 2026); changing a row's task text or removing a row needs Jack's OK.
 
 ## Step 1 — Gather
 
@@ -23,7 +23,7 @@ Start with the dashboard. Everything else fills it in.
 
 2. `projects/awards26/CLAUDE.md` — event dates, venue status, packages, key people. The dashboard says *what* is outstanding; this says *what is true about the event*. Do not trust dates memorised from elsewhere, a wrong-dates template has already circulated once.
 
-3. `projects/awards26/TODO.md` — the detail the dashboard rows do not carry: who was emailed when, what was promised, what is blocked on whom, and the running commentary on each thread. Treat it as the dashboard's notes field rather than a competing list. Anything here with no dashboard row is a candidate for one.
+3. `projects/awards26/TODO.md` — Claude's own open work only: drafts, letters and website changes that are outstanding and Claude's to do. It is not a history and not a waiting list; the mail and the dashboard are the record, and what is waiting on whom lives in the dashboard rows' `details`.
 
 4. The satellites TODO.md points to: `nominations-website-status.md` (nominations/Postmark), `bsva-workshop-sow.md` (workshop organisation). Skim both every time — a satellite can hide something that outranks everything on either list (the Postmark file once concealed a production email outage), and you cannot know that without looking.
 
@@ -31,7 +31,7 @@ Also check today's date against the event: **29 November – 3 December 2026, Ma
 
 ## Step 2 — Rank
 
-Walk the dashboard's nine sections in order and ask what each one needs at this many weeks out. That is the frame. TODO.md and the satellites then tell you which of those are already moving, already promised, or already blocked, and add anything that has no row yet.
+Walk the dashboard's nine sections in order and ask what each one needs at this many weeks out. That is the frame. The rows' `details`, TODO.md and the satellites then tell you which of those are already moving, already promised, or already blocked.
 
 Score the merged list with this priority order, and be ready to defend the pick in one sentence each:
 
@@ -64,7 +64,7 @@ Do the task properly, routing through the existing skills rather than reinventin
 
 Email style: British English, warm and concise, no em dashes, run drafts through `/humanizer`. Check `projects/awards26/CLAUDE.md` and the sponsor overview for the correct names, packages and history before writing — a chase email that misstates what was agreed is worse than no email.
 
-If the task turns out to be blocked mid-way (missing attachment, unanswered question only Jack can resolve), stop, report exactly what is missing, and leave the task un-ticked with a progress note instead.
+If the task turns out to be blocked mid-way (missing attachment, unanswered question only Jack can resolve), stop, report exactly what is missing, and write what it is waiting on into the matching dashboard row's `details`.
 
 ## Step 5 — Write back
 
@@ -73,9 +73,10 @@ Only after the work is genuinely done (or handed to Jack as an open draft):
 The dashboard is updated first, because it is what the next invocation trusts.
 
 1. **Dashboard** — find the matching row in `philippines."Task"` and set `completed = true` (`UPDATE ... SET completed = true WHERE id = '...'`, always on the specific id, never a bare `WHERE section = ...`). Never mark a task complete whose real-world action is still sitting unsent in a draft window; that is the one write that quietly corrupts the source of truth.
-   - If the work has **no row at all**, insert one in the section it belongs to, with `details` carrying enough to be actionable on its own. New rows are a normal part of keeping this list true, so do not leave the work homeless just because the template did not anticipate it.
-   - **Editing or deleting existing rows needs Jack's explicit OK**, including fixing the leftover template wording. Ask, then do it in the same session rather than logging it for later.
+   - **Status goes in `details`.** Anything worth tracking (what was asked, of whom, by when; what a chase said; what it is waiting on) is written into the `details` column of the closest existing row, dated. Rows whose `details` are stale get them rewritten to the current position.
+   - **Never insert a new row** (Jack, 28 September 2026). Work the template did not anticipate goes into the `details` of the nearest row in the right section.
+   - **Changing a row's task text or deleting a row needs Jack's explicit OK**, including fixing the leftover template wording. Ask, then do it in the same session rather than logging it for later.
 
-2. **TODO.md** — tick the item (`- [x]`) with a completion date, or annotate partial progress in place. Add any new tasks that surfaced, dated, per the file's own convention. Keep it as the narrative record: who was contacted, what was promised, what is blocked and on whom, the things a one-line dashboard row cannot hold. Where the two lists disagreed in Step 1, correct whichever was stale.
+2. **TODO.md** — only items that are outstanding **and Claude's to do**. Waiting-on-others, meeting times, colleagues' actions and Jack's own decisions do not go here; they go in the dashboard `details`, or nowhere if the mail already records them. **Delete the item** once it is done; do not tick it and leave it. While you are in the file, delete anything finished or not Claude's. Where the two lists disagreed in Step 1, correct whichever was stale.
 
-3. **Report** — close with: what was done, where any drafts are waiting (which app, which window), what was ticked or added on the dashboard and in TODO.md, and what the next-ranked task is, so the following invocation has a head start.
+3. **Report** — close with: what was done, where any drafts are waiting (which app, which window), what was ticked or noted on the dashboard, what was removed from or added to TODO.md, and what the next-ranked task is, so the following invocation has a head start.

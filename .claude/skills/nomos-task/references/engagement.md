@@ -21,19 +21,22 @@ This engagement is private to Jack. It stays out of all partnership-facing docum
 
 ## Mail identity
 
-NOMOS consultancy mail goes out from **`jack@vanderpump.tech`**, in **Apple Mail** (the account is configured there under that name). Not the ICPS Exchange account: an approach letter landing from an ICPS address crosses the line above.
+**Commission-facing mail (approach letters, chases, replies to commissions) goes from the ICPS Exchange account, in Outlook, with NOMOS played down.** Decided by Jack on 22 September 2026 for the Sweden and BARMM letters and confirmed as the default on 28 September 2026. It was already the practice before that: all three 10 September approaches carried the ICPS signature, and every chase since has gone from Exchange.
 
-Use this skill's `compose.sh`, which sets the sender for you. Signature:
+- Draft through `/email-inbox`'s compose script on the `jack-icps` profile: `.claude/skills/email-inbox/compose.sh --account jack-icps --to … --subject … --body …`. It opens an Outlook draft and the ICPS signature is appended automatically, so the body ends at "Kind regards," with no name or contact block.
+- Jack writes as himself at ICPS. NOMOS appears once, as "a platform we are using to share our content with the wider electoral community". Never "I edit the content platform at NOMOS", and nothing that says Jack works for or is paid by NOMOS.
+- Why it holds: most commissions know Jack through ICPS, so the letter lands as coming from someone they know, and nothing in it discloses the consultancy. The cost, worth keeping in view: it points ICPS relationships at a platform Jack is privately paid by. If that question is ever put to him, the agreed line above stands.
+
+**Mail to the NOMOS side (Charles, Sean, the CTO) and anything else that is plainly consultancy business goes from `jack@vanderpump.tech`**, in Apple Mail, on the `/email-inbox` `jack-tech` profile or this skill's `compose.sh`, which fixes the sender. Signature there:
 
 ```
 Kind regards,
 
 Jack Vanderpump
-Editor, NOMOS content platform
 jack@vanderpump.tech
 ```
 
-`/email-inbox`'s `jack-icps` profile is for ICPS work: use it here only to *search* Exchange for correspondence history, never to send. Consultancy mail goes out on the `jack-tech` profile, which composes in Apple Mail from `jack@vanderpump.tech`.
+The letter templates in `content/deep-dives/approach-letter.md` still carry the older "I edit the content platform at NOMOS" line. Swap it for the ICPS framing above when adapting them.
 
 ## Writing
 

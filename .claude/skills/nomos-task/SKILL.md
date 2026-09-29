@@ -16,18 +16,19 @@ One invocation = one task moved to done (or as far as it can go without Jack). G
 
 ## Step 1 — Gather
 
-1. **`projects/nomos-consultancy/TODO.md`** — the to-do spine, and the first thing to read. Who was written to and when, what was promised, what is blocked and on whom. If the file does not exist, build it from the Status section of `projects/nomos-consultancy/CLAUDE.md` and the two CSVs before going further, following `references/todo-format.md`.
+1. **`projects/nomos-consultancy/TODO.md`** — the to-do spine, and the first thing to read. What is due, what was promised, what is blocked and on whom. If the file does not exist, build it from the Status section of `projects/nomos-consultancy/CLAUDE.md` and the two CSVs before going further, following `references/todo-format.md`.
 
 2. **`projects/nomos-consultancy/CLAUDE.md`** — the engagement's Status section: what is agreed, what Charles has signed off, what is waiting on him. TODO.md says what is outstanding; this says what is true. Where the two disagree, find out which is stale (check the mail, check the file that records the outcome) and fix the wrong one. Both being true is part of the job.
 
-3. **The two deep-dive CSVs** in `projects/nomos-consultancy/content/deep-dives/`:
-   - `pipeline.csv` — 45 forward elections, September 2026 to March 2027. The `Approach window` column is a calendar: anything due this week or next is live work. `Status` runs Not approached → Approached → Chasing → Agreed → Interviewed → Drafted → Approved → Published (or Declined / Lapsed / Watch).
+3. **The outreach log and the two deep-dive CSVs** in `projects/nomos-consultancy/content/deep-dives/`:
+   - `outreach-log.csv` — **the source of truth for post-election outreach**, one row per commission conversation: who it went to, the date of the approach and each chase, whether and when they replied, what they said, the outcome (`Not sent`, `Awaiting reply`, `Agreed`, `Declined`, `Closed, no reply`, then `Interviewed` → `Piece drafted` → `Approved` → `Published`), and the next step with its date. Content HQ shows it on the single `/elections` page (past and future elections with outreach status on each row). Check it against Sent Items and the inbox before ranking: twice now a record has said "unsent" about mail that had gone.
+   - `pipeline.csv` — 45 forward elections, September 2026 to March 2027. The `Approach window` column is a calendar: anything due this week or next is live work. `Status` carries a row's state until the first letter is drafted (Not approached, Lapsed, Watch, or a dated hold note); from then on the row points at the log and the log carries it.
    - `recent-elections.csv` — 27 elections already held, March to September 2026. Not a weekly rhythm: the whole list is approachable now, worked in one pass, priority 1 first.
    - Read `deep-dives/README.md` every time. It carries the working rules the CSVs cannot: one approach then two chases at two-week intervals and no more; warm route before cold email; six countries on both lists that must be approached **once**; `Watch` rows whose feasibility note has to be re-read before anything is sent; commission heads who change between research and approach.
 
 4. **`projects/nomos-consultancy/contacts/`** — the introductions side. `2026-07-31-nomos-outreach-contacts.csv` holds 408 warm contacts (80 priority 1) with a `NOMOS angle` per person. The companion `.md` carries two pre-outreach checks that still have not been done: 18 people on multiple addresses, 23 whose on-file address may be dead. Do the relevant check before writing to anyone.
 
-5. **The mail**, when a task turns on what someone last said. `/email-inbox` handles both sides: its `jack-icps` profile for the ICPS-side history on Exchange, its `jack-tech` profile for consultancy correspondence on `jack@vanderpump.tech`. Keep them apart, and send consultancy mail only from `jack-tech`.
+5. **The mail**, when a task turns on what someone last said. `/email-inbox` handles both sides: its `jack-icps` profile for the ICPS-side history on Exchange, its `jack-tech` profile for consultancy correspondence on `jack@vanderpump.tech`. Keep them apart. Commission-facing mail goes from `jack-icps` in Outlook with NOMOS played down; mail to the NOMOS side goes from `jack-tech`. The rule and the framing are in `references/engagement.md`.
 
 Check today's date against the live approach windows before ranking. A window that passed unworked is a lost election, not a late task.
 
@@ -54,10 +55,10 @@ Route through what already exists rather than reinventing it:
 
 | Task shape | Route |
 |---|---|
-| Approach letter or chase to a commission | `content/deep-dives/approach-letter.md`, drafted via this skill's `compose.sh` (Apple Mail, `jack@vanderpump.tech`) |
+| Approach letter or chase to a commission | `content/deep-dives/approach-letter.md`, reframed per `references/engagement.md`, drafted via `/email-inbox`'s `compose.sh --account jack-icps` (Outlook, ICPS signature auto-appended) |
 | Interview prep or write-up | `content/deep-dives/interview-structure.md` |
 | Warm introduction to a contact | The `NOMOS angle` column on the outreach CSV; same compose script |
-| Reply in an existing consultancy thread | `/email-inbox --account jack-tech`, draft only |
+| Reply in an existing thread | `/email-inbox` on whichever profile holds the thread (commission threads are on `jack-icps`, NOMOS-side threads on `jack-tech`), draft only |
 | Checking what someone last said | `/email-inbox` search, on whichever profile holds the thread |
 | Speaker or expert research | `/find-speakers` |
 | Content HQ app change | `content-hq/CLAUDE.md` first — the app is **public** and its copy rules are strict |
@@ -71,14 +72,15 @@ Three checks before any letter goes out, all of them easy to skip and expensive 
 
 Everything is written for publication: assume anything sent to an official is disclosable under public records law. No commercial content, no NOMOS product mentions, no assessment of electoral outcomes. Style and signature are in `references/engagement.md`.
 
-If the task turns out blocked mid-way, stop, say exactly what is missing, and leave it un-ticked with a progress note rather than half-done.
+If the task turns out blocked mid-way, stop, say exactly what is missing, and rewrite its TODO line as what is left rather than leaving it half-done.
 
 ## Step 5 — Write back
 
 Only after the work is genuinely done, or handed to Jack as an open draft. **Never mark something done whose real-world action is still sitting unsent in a draft window.** That is the one write that quietly corrupts the list.
 
-1. **The CSV row** — set `Status` on the specific election row and date the action in its notes. A drafted-but-unsent approach stays `Not approached` with a note, not `Approached`.
-2. **`TODO.md`** — tick the item with a completion date, or annotate partial progress in place. Add anything new that surfaced, dated. Keep it as the narrative record: who was contacted, what was promised, what is blocked and on whom.
-3. **`CLAUDE.md`'s Status section** — only when something changed that the engagement's standing picture should carry (a commission agreed, Charles answered the honorarium question, a workstream unblocked). Not for routine ticks.
-4. **Content HQ** — if either CSV changed, regenerate the app data (`python3 scripts/generate-pipeline.py` / `generate-recent.py`, run from `content-hq/`) so the public view does not drift. Deploying is Jack's call, not yours.
-5. **Report** — what was done, where any draft is waiting (which app, which window), what was ticked, and what the next-ranked task is, so the following invocation has a head start.
+1. **The outreach log** — anything written to, or heard from, a commission goes in `outreach-log.csv`. A new letter adds a row (a drafted-but-unsent one with `Outcome` `Not sent` and only the `Drafted` date filled in); a send, a chase, a reply or an agreement updates the row's dates, `Response`, `Outcome` and `Next step`. Dates always as `22 Sep 2026`. The public columns must stay public-safe (roles, not names; no addresses, no quotes); names, addresses and working detail go in the two internal columns, which are never published. Point the election row's `Status` in the CSV at the log the first time a row gets a log entry.
+2. **The CSV row** — for rows without a log entry only: holds, lapses, `Watch`, re-dated windows, verified heads.
+3. **`TODO.md`** — delete the item once it is done (no ticks, no completion notes); if it is partly done, rewrite the line as what is left. Add anything new that can't be done yet, one line with its date or blocker. It is a list of reminders, not a record: history belongs in the log, detail in the CSV row. Format in `references/todo-format.md`.
+4. **Not `CLAUDE.md`.** Outreach progress, including a commission agreeing, is recorded in the log and seen on Content HQ. `CLAUDE.md`'s Status section is for the engagement itself (Charles's decisions, scope, a workstream opening or closing), and Jack has said outreach does not belong there (28 September 2026).
+5. **Content HQ** — after changing the log or either CSV, regenerate all three (`python3 scripts/generate-outreach.py`, `generate-pipeline.py`, `generate-recent.py`, run from `content-hq/`). Each refuses to write if a forbidden phrase survives or a log `Covers` key matches no row. Deploying is Jack's call, not yours.
+6. **Report** — what was done, where any draft is waiting (which app, which window), what came off the TODO list, and what the next-ranked task is, so the following invocation has a head start.
