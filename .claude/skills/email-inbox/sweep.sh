@@ -43,6 +43,13 @@
 # time. Parked messages are never marked, never moved, and their unread status
 # is left exactly as it is.
 #
+# --swept-at sets the watermark explicitly. Pass the moment the inbox was READ,
+# not the moment the sweep runs: a run takes minutes to classify and draft, and
+# anything arriving in between is otherwise stamped below the watermark and never
+# shows up as new again. (Three messages nearly went this way on 22 Sep 2026.)
+# Without it the watermark is the time the sweep finished, which is only safe for
+# a sweep with no drafting in it.
+#
 # State lives in <accounts dir>/state/<slug>.tsv:
 #   swept     <ISO timestamp>            when the last real (non dry-run) sweep ran
 #   parked    <id>  <date>  <note>       deliberate inbox reminders
@@ -61,6 +68,7 @@ SHOW_STATE=false
 PARK_ID=""
 UNPARK_ID=""
 NOTE=""
+SWEPT_AT=""
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -72,6 +80,7 @@ while [[ $# -gt 0 ]]; do
         --park) PARK_ID="$2"; shift 2 ;;
         --unpark) UNPARK_ID="$2"; shift 2 ;;
         --note) NOTE="$2"; shift 2 ;;
+        --swept-at) SWEPT_AT="$2"; shift 2 ;;
         *) echo "Unknown argument: $1" >&2; exit 1 ;;
     esac
 done
@@ -433,7 +442,7 @@ TMP_STATE="$(mktemp)"
         esac
         printf '%s\t%s\t%s\t%s\n' "$kind" "$id" "$date" "$note"
     done < <(grep -v '^#' "$STATE_FILE")
-    printf 'swept\t%s\t%s\n' "$(now_iso)" "$FROM_MAILBOX"
+    printf 'swept\t%s\t%s\n' "${SWEPT_AT:-$(now_iso)}" "$FROM_MAILBOX"
 } > "$TMP_STATE"
 mv "$TMP_STATE" "$STATE_FILE"
 

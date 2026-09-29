@@ -98,10 +98,18 @@ wrong.
 openers, the transitions and the closing line. Two messages built on the same
 skeleton read as mail merge, and the recipients may well compare notes.
 
+**Close on the reaction, not on the admin.** A short reply ends where the human
+bit ends. Jack cuts the courtesy line ("Thank you for coming back to me") and he
+cuts the forward-looking promise ("I'll be in touch when we open the committee
+for the 23rd"), because the first is noise and the second is a commitment he has
+not decided to make yet. If a draft's last paragraph is about what happens next
+administratively, it is probably the paragraph he would delete. See *Cutting a
+reply in half* under Corrections from sent mail.
+
 ## A worked correction
 
-Jack's edit to a drafted paragraph, August 2026. The draft was to Professor
-Sarah Birch, who had offered four possible symposium topics.
+Jack's edit to a drafted paragraph. The draft was to Professor Sarah Birch, who had
+offered four possible symposium topics.
 
 Drafted:
 
@@ -173,7 +181,10 @@ same sentence skeleton reused across two emails.
 
 ## Corrections from sent mail, September 2026
 
-Drafts compared against what Jack actually sent, 14 to 16 September 2026.
+Drafts compared against what Jack actually sent. The most reliable way to tune
+this file: after a run, read what went out and diff it against what was drafted.
+
+From 14 to 16 September 2026:
 
 - **Don't guess at why a colleague's figure is different.** To Tracy on
   nominations, the draft said "I suspect the 23 is what the team have logged
@@ -189,3 +200,37 @@ Drafts compared against what Jack actually sent, 14 to 16 September 2026.
   reminder. Answer the question asked; leave out extra context unless it
   changes what she does next.
 - **Check weekdays.** A draft said "Monday 22 September"; it is a Tuesday.
+
+### Cutting a reply in half, 22 September 2026
+
+Toby James said he could not come to Manila, though he stays on the Awarding Committee ("I think I need to sit this one
+out with many commitments. Next year though!"). The drafted reply was already
+short. Jack halved it again.
+
+Drafted:
+
+> Hi Toby,
+>
+> That's a shame, but I quite understand. Thank you for coming back to me.
+>
+> Next year it is. I'll be in touch when we open the committee for the 23rd.
+>
+> Best,
+
+Sent:
+
+> Hi Toby,
+>
+> That's a shame, but I quite understand. Next year it is!
+>
+> Best,
+
+Three things went. The thank-you, which added nothing to a man who had just done
+him a small courtesy. The promise to be in touch about the 23rd, which is
+exactly the "follow-up-chasing language" the habits section warns against. And
+the paragraph break, because the whole reply is one thought. What arrived
+instead was an exclamation mark, picking up Toby's own "Next year though!".
+
+The lesson is about **length floor**: when a reply has nothing to transact, two
+lines is the target, not four. Draft short, then cut the sentence that is being
+polite about the process rather than warm about the person.

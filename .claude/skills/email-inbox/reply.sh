@@ -9,6 +9,7 @@
 #   ./reply.sh --sender "email@example.com" --body "Hi X, ..."
 #   ./reply.sh --message-id "<id>" --html --body "<div><p>Hi X,</p></div>"
 #   ./reply.sh --account jack-tech --sender "charles@nomos.com" --body "..."
+#   ./reply.sh --message-id "<id>" --attach ~/letter.pdf --body "Hi X, ..."
 #
 # Arguments:
 #   --message-id ID  RFC Message-ID of the message to reply to (angle brackets
@@ -21,6 +22,11 @@
 #   --body TEXT      the reply text to paste in (required, supports multiline)
 #   --cc ADDRESS     additional CC recipient (optional, repeatable). Only for
 #                    addresses that are not already on the thread
+#   --attach PATH    file to attach (optional, repeatable). Pasted into the
+#                    reply window after the body, as a Finder copy and paste
+#                    would, so the quoted thread is never touched. Use this rather than reaching for compose.sh
+#                    when a reply needs a letter or a document: a compose loses
+#                    the thread and rebuilds the recipients from scratch
 #   --html           treat --body as HTML, for links and formatting
 #   --mailbox NAME   mailbox to look in (default: Inbox)
 #   --account NAME   profile slug, Apple Mail account name, or address
@@ -34,6 +40,7 @@ SENDER=""
 SUBJECT=""
 BODY=""
 CC_ADDRESSES=()
+ATTACH_PATHS=()
 HTML_MODE=false
 
 while [[ $# -gt 0 ]]; do
@@ -45,6 +52,7 @@ while [[ $# -gt 0 ]]; do
         --subject) SUBJECT="$2"; shift 2 ;;
         --body) BODY="$2"; shift 2 ;;
         --cc) CC_ADDRESSES+=("$2"); shift 2 ;;
+        --attach) ATTACH_PATHS+=("$2"); shift 2 ;;
         --html) HTML_MODE=true; shift ;;
         *) echo "Unknown argument: $1" >&2; exit 1 ;;
     esac
@@ -58,6 +66,18 @@ if [[ -z "$MESSAGE_ID" && -z "$SENDER" ]]; then
     echo "Error: --message-id or --sender is required" >&2
     exit 1
 fi
+
+# Resolve and check attachments before touching Mail, so a bad path fails here
+# rather than half way through opening a reply window.
+ABS_ATTACHMENTS=()
+for path in "${ATTACH_PATHS[@]}"; do
+    abs_path=$(cd "$(dirname "$path")" 2>/dev/null && printf '%s/%s' "$(pwd)" "$(basename "$path")")
+    if [[ -z "$abs_path" || ! -f "$abs_path" ]]; then
+        echo "Error: attachment not found: $path" >&2
+        exit 1
+    fi
+    ABS_ATTACHMENTS+=("$abs_path")
+done
 
 resolve_account "$ACCOUNT_ARG"
 [[ -n "$MAILBOX" ]] || MAILBOX="$(default_inbox)"
@@ -77,6 +97,33 @@ CC_SCRIPT=""
 for addr in "${CC_ADDRESSES[@]}"; do
     CC_SCRIPT+="                    make new cc recipient at end of cc recipients of replyMsg with properties {address:\"$(as_escape "$addr")\"}"$'\n'
 done
+
+# Build the attachment AppleScript. Files go in by pasting file URLs into the
+# reply window straight after the body, exactly as a Finder copy and paste would.
+# Never attach through `content of replyMsg` (`tell content ... make new
+# attachment`): writing to a reply's content makes Mail rebuild the message from
+# its scripting model, which drops the whole quoted thread. That happened to the
+# Tracy trainers reply on 28 September 2026, so it is the same rule as "never set
+# content of a reply", not a separate one.
+ATTACH_BLOCK=""
+if [[ ${#ABS_ATTACHMENTS[@]} -gt 0 ]]; then
+    ATTACH_BLOCK+="delay 0.5"$'\n'
+    ATTACH_BLOCK+="set fileUrls to current application's NSMutableArray's array()"$'\n'
+    for abs_path in "${ABS_ATTACHMENTS[@]}"; do
+        ATTACH_BLOCK+="fileUrls's addObject:(current application's NSURL's fileURLWithPath:\"$(as_escape "$abs_path")\")"$'\n'
+    done
+    ATTACH_BLOCK+="set pb to current application's NSPasteboard's generalPasteboard()"$'\n'
+    ATTACH_BLOCK+="pb's clearContents()"$'\n'
+    ATTACH_BLOCK+="pb's writeObjects:fileUrls"$'\n'
+    ATTACH_BLOCK+="delay 0.3"$'\n'
+    ATTACH_BLOCK+="tell application \"System Events\" to tell process \"Mail\" to keystroke \"v\" using {command down}"$'\n'
+    # No count check: Mail's scripting model does not see pasted attachments
+    # (`count of attachments of replyMsg` reads 0 even when the file is on the
+    # draft), so a check would always fail. Say what was pasted and let the
+    # owner's review of the draft be the check. The 16 September Georgia reply
+    # went out without its two letters, so the reminder matters.
+    ATTACH_BLOCK+="return \"Pasted ${#ABS_ATTACHMENTS[@]} attachment(s) into the draft. Check they show before sending.\""$'\n'
+fi
 
 # The matching block is shared between the plain and HTML paths.
 # `read -d ''` hits EOF without finding its delimiter and so exits 1; that is
@@ -130,6 +177,7 @@ if [[ "$HTML_MODE" == true ]]; then
     # HTML mode: put HTML on the pasteboard so links and formatting survive.
     cat > /tmp/mail-reply.applescript << APPLESCRIPT
 use framework "AppKit"
+use scripting additions
 
 set htmlBody to "$ESCAPED_BODY"
 
@@ -147,9 +195,14 @@ tell application "System Events"
         keystroke "v" using {command down}
     end tell
 end tell
+
+$ATTACH_BLOCK
 APPLESCRIPT
 else
     cat > /tmp/mail-reply.applescript << APPLESCRIPT
+use framework "AppKit"
+use scripting additions
+
 set replyBody to "$ESCAPED_BODY
 
 "
@@ -164,6 +217,8 @@ tell application "System Events"
         keystroke "v" using {command down}
     end tell
 end tell
+
+$ATTACH_BLOCK
 APPLESCRIPT
 fi
 

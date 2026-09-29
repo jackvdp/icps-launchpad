@@ -10,6 +10,7 @@ Reusable emails for the `/email-inbox` skill. Each file has the same shape: when
 | Delegate briefing | Sending registered delegates their joining details, usually the day before, via the admin team | `webinars/delegate-briefing.md` |
 | Sponsor welcome | First logistics email to a newly signed Awards sponsor or exhibitor: point-of-contact intro plus package recap | `awards/sponsor-welcome.md` |
 | Sponsor nominations ask | Asking a sponsor to nominate the partner commissions they work with before a nominations deadline | `awards/sponsor-nominations.md` |
+| Nomination received | Confirming to a commission that its nomination arrived, whether through the form or by email | `awards/nomination-received.md` |
 
 ## How to use one
 

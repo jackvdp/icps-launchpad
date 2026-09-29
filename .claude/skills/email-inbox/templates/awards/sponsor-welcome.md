@@ -74,6 +74,6 @@ The sponsor's named contact. Jack is logistics, not finance: no prices, VAT or p
 
 ## Manila 2026 notes (prune when the edition closes)
 
-- Edition details: 22nd edition, co-hosted with the Commission on Elections of the Philippines (COMELEC), Saturday 29 November to Wednesday 3 December 2026, Manila, Asia-Pacific region.
-- Venue caution (Aug 2026): a venue change from The Manila Hotel is pending with COMELEC. Prefer Variant B or leave the venue out until confirmed.
+- Edition details: 22nd edition, co-hosted with the Commission on Elections of the Philippines (COMELEC), Sunday 29 November to Thursday 3 December 2026, Manila, Asia-Pacific region.
+- Venue: the **Conrad Manila**, replacing The Manila Hotel. Safe to name to sponsors. COMELEC has not yet put the name in writing to ICPS, so do not attribute it to them. Rooms are booked centrally: COMELEC's Protocol and Liaison Office books with the hotel from a consolidated rooming list ICPS collects, so tell sponsors to send their dates rather than book direct.
 - Variant A was sent to Al Ghurair on 30 June 2026; Variant B to Mantratec on 7 July 2026.

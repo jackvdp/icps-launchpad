@@ -149,6 +149,12 @@ default profile.
 - **Mailbox names come back URL-encoded.** `Awards%2026%20Sponsors` is
   `Awards 26 Sponsors`. Decode before showing them to the user, and pass the
   decoded name to the scripts, which match what Mail displays.
+- **The MCP's `to` field is every recipient, not the To line.** It folds CC in,
+  so a message addressed to one person and copied to another comes back with
+  both in `to` and the second also in `cc`. Never read it as evidence that
+  someone is on the To line, and never report a duplicate-recipient bug from it.
+  Apple Mail's `to recipients` / `cc recipients` are the authority when it
+  matters. (Nearly mis-reported as a compose bug, 22 September 2026.)
 - **The MCP's `message_id` is not a Message-ID.** It is a local index rowid
   (`mailmsg_90740`). To act on a message with `mark.sh` or `move.sh`, call
   `mail_read_message` with `include_headers: true` and use the real
@@ -176,7 +182,23 @@ owner is deliberately keeping in it.
 - `swept <timestamp>` — the watermark. Anything received after it is **new**.
 - `parked <id>` — a deliberate reminder. Never proposed, never touched.
 - `awaiting <id>` — a reply was drafted and the message filed, but the send was
-  never confirmed. Worth a line in the closing report, nothing more.
+  never confirmed. **Settle these against Sent Items before reporting them.**
+  One search per thread is cheap, and the owner often sends a draft while the
+  run is still going, which makes the row stale the moment it is written. Say
+  what actually went and what is genuinely still sitting in drafts. (On 22
+  September 2026 four of five drafts had already been sent by the time the
+  closing report was written.)
+
+**Note the time before you read**, and pass it to `sweep.sh --swept-at` at the
+end of the run:
+
+```bash
+date -u +%Y-%m-%dT%H:%M:%SZ
+```
+
+A run takes minutes. Anything arriving while you classify and draft is stamped
+below a watermark set at the end, and never shows up as new again. Three
+messages nearly went that way on 22 September 2026.
 
 Then read the inbox:
 
@@ -184,7 +206,13 @@ Then read the inbox:
 mail_search_messages(account_uuid: <from profile>, mailbox_role: "inbox", limit: 40)
 ```
 
-Add `date_from` set to the watermark for `new`. Fetch the whole inbox for a
+**Never pass `date_from`.** It is broken in this MCP: any search carrying it
+returns an empty list, with no error and no warning, so a `new` sweep reports a
+clean inbox that is not clean. Confirmed again 22 September 2026, on a sent
+search that returned results the moment the filter came off. Fetch without it
+and compare each message's `date` (Unix epoch) against the watermark in code.
+
+Fetch the whole inbox for a
 plain sweep, because filing decisions need the old messages too, and let the
 parked list rather than the date decide what to leave alone.
 
@@ -304,7 +332,7 @@ Then run it:
 
 ```bash
 .claude/skills/email-inbox/sweep.sh --plan /path/to/sweep.tsv --dry-run
-.claude/skills/email-inbox/sweep.sh --plan /path/to/sweep.tsv
+.claude/skills/email-inbox/sweep.sh --plan /path/to/sweep.tsv --swept-at 2026-09-22T18:40:00Z
 ```
 
 - `file` marks read and files. `file-unread` files without marking read, for
@@ -410,6 +438,27 @@ is: Mail holds every account, and its reply-all keeps the thread and the
 existing recipients. Use `--cc` only for addresses not already on the thread,
 and only when you know the address for certain from the conversation. Never
 invent one.
+
+**A reply that needs a letter or a document takes `--attach`.** Repeat it per
+file. Do not reach for `compose.sh` because it has attachments: a compose breaks
+the thread, rebuilds the recipients from scratch, and leaves a "Re:" subject
+with nothing behind it. (Done wrongly on 22 September 2026 with the A Daga visa
+letters, when `reply.sh` had no `--attach`; the flag was added the same day.)
+
+```bash
+.claude/skills/email-inbox/reply.sh \
+  --mailbox "Awards 26 Sponsors" \
+  --message-id "<CAFRMrpL...@mail.gmail.com>" \
+  --attach projects/awards26/letters/2026-09-22-invitation-rajendra-daga.pdf \
+  --attach projects/awards26/letters/2026-09-22-invitation-emil-mariya-benny.pdf \
+  --body "Hi Raj, ..."
+```
+
+The files are pasted into the reply window straight after the body, the way a
+Finder copy and paste would. Mail's scripting model cannot see pasted
+attachments, so the script cannot confirm them: **tell the user to check the
+attachment shows on the draft** before sending. Pass `--mailbox` when the message
+has already been filed; without it the script only looks in the Inbox.
 
 Use `--html` when the body has links or formatting, wrapping it in a `<div>`
 with `<p>` paragraphs and `<a href='...'>` links.
@@ -565,7 +614,7 @@ comment.
 | `accounts.sh` | List Apple Mail accounts (name, UUID, addresses) and configured profiles |
 | `fetch.sh` | Read a mailbox live: `--max`, `--search`, `--offset`, `--unread`, `--ids`, `--mailbox` |
 | `mailboxes.sh` | `--list [--filter]` to see folders; `--mailbox "Name" [--search] [--preview\|--full] [--ids]` to browse one |
-| `reply.sh` | Reply-all draft in Apple Mail: `--message-id` or `--sender`/`--subject`, `--body`, `--cc`, `--html` |
+| `reply.sh` | Reply-all draft in Apple Mail: `--message-id` or `--sender`/`--subject`, `--body`, `--cc`, `--attach`, `--html` |
 | `compose.sh` | New draft: `--to`, `--subject`, `--body`, `--cc`, `--bcc`, `--html`, `--attach`, `--client` |
 | `mark.sh` | `--read`/`--unread`/`--flag`/`--unflag`, matched by `--message-id` or `--sender`/`--subject`, plus `--all`, `--dry-run` |
 | `move.sh` | `--to "Folder"`, matched by `--message-id` or `--sender`/`--subject`, plus `--from-mailbox`, `--all`, `--dry-run` |
@@ -624,11 +673,16 @@ Example:
 - Generates an AppleScript at `/tmp/mail-reply.applescript`
 - Opens a reply window on the resolved account, adds any CC recipients
 - Moves the cursor to the top with `Cmd+Up`, then pastes the body
+- Pastes any `--attach` files as file URLs straight after the body
 - **Never sends**
 
 Constraints baked into the script, do not undo them:
 
 - Do **not** set the `content` property of a reply: it overwrites the thread.
+- Do **not** attach through the content either (`tell content of replyMsg to
+  make new attachment`). It is a write to the content by another route, and it
+  wiped the quoted thread from the Tracy trainers reply on 28 September 2026.
+  Attachments go in by paste.
 - Do **not** use `Cmd+A`: it can select and replace the thread.
 - The `delay 2` after opening the reply window lets it load before pasting.
 
@@ -646,6 +700,7 @@ conventions, and how to add a new one.
 | Delegate briefing | Sending registered delegates their joining details, usually the day before | `templates/webinars/delegate-briefing.md` |
 | Sponsor welcome | First logistics email to a newly signed Awards sponsor or exhibitor | `templates/awards/sponsor-welcome.md` |
 | Sponsor nominations ask | Asking a sponsor to nominate the partner commissions they work with | `templates/awards/sponsor-nominations.md` |
+| Nomination received | Confirming to a commission that its nomination arrived. The most repeated email of the cycle; look it up in MongoDB before confirming | `templates/awards/nomination-received.md` |
 
 See Step 5b for the workflow.
 
