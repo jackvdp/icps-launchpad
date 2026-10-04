@@ -55,7 +55,7 @@ Route through what already exists rather than reinventing it:
 
 | Task shape | Route |
 |---|---|
-| Approach letter or chase to a commission | `content/deep-dives/approach-letter.md`, reframed per `references/engagement.md`, drafted via `/email-inbox`'s `compose.sh --account jack-icps` (Outlook, ICPS signature auto-appended) |
+| Approach letter or chase to a commission | `content/deep-dives/approach-letter.md`, drafted via `/email-inbox`'s `compose.sh --account jack-icps` (Outlook, ICPS signature auto-appended). **Every approach (not chases) goes with a formal letter** on ICPS headed paper, built with `/edit-doc` from `content/deep-dives/letters/_template-approach-letter.docx` and attached as a PDF with `--attach`; steps under "The formal letter" in `approach-letter.md` |
 | Interview prep or write-up | `content/deep-dives/interview-structure.md` |
 | Warm introduction to a contact | The `NOMOS angle` column on the outreach CSV; same compose script |
 | Reply in an existing thread | `/email-inbox` on whichever profile holds the thread (commission threads are on `jack-icps`, NOMOS-side threads on `jack-tech`), draft only |

@@ -44,11 +44,11 @@ are for reading rather than typing.
 | `Electoral/Electoral membership` | Network membership enquiries and renewals |
 | `Electoral/Electoral Press` | press releases and media enquiries |
 | `Electoral/Electoral Research` | practice briefs, research requests, survey work |
-| `Electoral/Nomos` | the ICPS/NOMOS partnership. Jack's private consultancy is a separate account, see [jack-tech](jack-tech.md) |
+| `Electoral/Nomos` | the ICPS/NOMOS partnership, and commissions' replies to the "... as an operational record" approach letters. Jack's private consultancy is a separate account, see [jack-tech](jack-tech.md) |
 | `Electoral/Horizon` | the Horizon Europe (INDEPACT) bid |
 | `BSVA` (top level) | BSVA survey work and the Manila workshop |
 | `Buzzmint` (top level) | Buzzmint, on the ICPS side |
-| `ICPS Training/*` | training courses and proposals, one mailbox per course |
+| `ICPS Training/*` | training courses and proposals, one mailbox per course. `Elearning` for e-learning course builds and reviews |
 
 Two things to know before filing. `Deleted Items` and `Sent Items` hold
 10,000 to 25,000 messages each, so never browse them without a search. And
@@ -127,8 +127,9 @@ sits with, Jack builds the letter with
 `projects/awards26/letters/_tools/make-invitation-pdf.py` (usage in
 `projects/awards26/standing-answers.md`, under *Letters*) and replies with it
 attached through `reply.sh --attach`. He needs each person's name as it appears
-on the passport and their job title; for a visa letter, the passport number
-too. Check first whether their nationality needs a visa for the Philippines at
+on the passport and their job title. A passport number goes on the letter when
+we have been given one, but **a letter is never held back to ask for it**: send
+it without and offer to reissue (Jack, 3 October 2026, Adjara SEC). Check first whether their nationality needs a visa for the Philippines at
 all: if it is on the 30-day visa-free list, the letter goes without a passport
 line and the reply says no visa is needed (Antigua and Barbuda, 27 September
 2026).
@@ -199,6 +200,8 @@ without asking again.
 | Delegates' spouses: is accommodation covered? | **Yes**, spouse accommodation is covered | 16 Sep 2026 (Georgia CEC) |
 | How many nominations do we need? | **60 in total** for Awards 26 | 16 Sep 2026 (Tracy) |
 | A visa letter is asked for and the passport number has been given | **Put the number on the letter.** `make-invitation-pdf.py --passport` prints it under the address block | 22 Sep 2026 (A Daga) |
+| A sponsor asks for more than their package (an extra delegate pass, say) | **That is Tracy's to sort.** Reply with Tracy copied and do not agree it yourself. Within the package, just confirm it | 3 Oct 2026 (Laxton) |
+| A letter is asked for and no passport number has been given | **Send the letter anyway**, and offer to reissue it with the number | 3 Oct 2026 (Adjara SEC) |
 | An individual with no organisation behind them offers to speak if all costs are covered | Decline. **We do not cover international airfare for anyone, speakers included.** Accommodation at the hotel is covered; the invitation to attend can stand | 22 Sep 2026 (Jeppe Soe, via Tracy) |
 | Tracy asks for "your normal Dear John letter" | The **airfare decline**, from Jack straight to the delegate: a new Outlook message To them, CC the colleague who invited them plus Devianee and Tracy, subject `Re: <their thread>`. No airfare in full or part; accommodation, meals and transfers covered; invitation stands, link the event page | 28 Sep 2026 (Bashar Sulaiman; same shape as Jeppe Soe, 22 Sep) |
 | A judge or Awarding Committee member asks whether ICPS will fund their flights | **No.** Airfare is not covered, business class or otherwise. Accommodation at the venue is covered. Jack may offer to explore an exception case by case, as he did for Toby James | 19 Sep 2026 (Nasim Zaidi, Toby James) |

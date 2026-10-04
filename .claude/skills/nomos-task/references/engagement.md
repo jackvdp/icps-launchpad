@@ -36,7 +36,7 @@ Jack Vanderpump
 jack@vanderpump.tech
 ```
 
-The letter templates in `content/deep-dives/approach-letter.md` still carry the older "I edit the content platform at NOMOS" line. Swap it for the ICPS framing above when adapting them.
+The templates in `content/deep-dives/approach-letter.md` carry this framing (agreed 29 September 2026): they open by introducing ICPS, the Network and the Awards, then make the ask, with NOMOS named once. Every approach also goes with a formal letter on ICPS headed paper; the template is `content/deep-dives/letters/_template-approach-letter.pages` (and `.docx`).
 
 ## Writing
 
@@ -96,7 +96,8 @@ projects/nomos-consultancy/
 │       ├── README.md            The working rules. Read every time.
 │       ├── pipeline.csv         45 forward elections, Sep 2026 – Mar 2027
 │       ├── recent-elections.csv 27 elections already held, Mar – Sep 2026
-│       ├── approach-letter.md   Standard + lookback variants
+│       ├── approach-letter.md   Standard + lookback variants, and how to build the formal letter
+│       ├── letters/             Formal letters on ICPS headed paper; _template-approach-letter.pages/.docx
 │       └── interview-structure.md
 └── content-hq/          Public Next.js app. Own CLAUDE.md. Read it before touching.
 ```

@@ -34,6 +34,7 @@ Cross-cutting work lives in `projects/`, one subfolder per project. **Each proje
 | **smartmatic** | ICPS–Smartmatic 2026 webinar series | `projects/smartmatic/CLAUDE.md` |
 | **training** | ICPS training-course marketing: audience lists for course outreach | `projects/training/CLAUDE.md` |
 | **dashboard** | The Philippines event dashboard app (Neon Postgres), a separate repo symlinked in | none; see memory for the Neon project |
+| **judging** | The Awards judging app (Next.js, shadcn, MongoDB): private packs for the Awarding Committee, scoring, results. A separate repo symlinked in, deployed at electoral-judging.vercel.app | none; see its `README.md` |
 | **bsva** | BSVA survey analysis and rebuild (separate git repo, left as is) | `projects/bsva/claude.md` |
 | **horizon** | EU Horizon Europe grant bid (INDEPACT): call, pitch, work packages | none |
 
