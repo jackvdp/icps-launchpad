@@ -19,7 +19,7 @@
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.48.1",
     "@vercel/analytics": "^2.0.1",
-    "@vercel/blob": "^0.27.0",
+    "@vercel/blob": "^2.8.0",
     "ai": "^6.0.134",
     "animate.css": "^4.1.1",
     "aws-sdk": "^2.1499.0",
