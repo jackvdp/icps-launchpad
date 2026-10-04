@@ -100,7 +100,8 @@ async function uploadImageVersion(
     try {
         const blob = await put(blobPathname, buffer, {
             access: 'public',
-            addRandomSuffix: false // Keep original filenames
+            addRandomSuffix: false, // Keep original filenames
+            allowOverwrite: true // Re-uploading a file replaces it, as it always has
         });
 
         return blob.url;

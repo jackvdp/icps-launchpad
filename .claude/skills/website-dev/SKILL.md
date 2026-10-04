@@ -112,6 +112,15 @@ When you edit SCSS, you (or the user) need to run `npm run sass` to see the chan
 
 Hosted on Vercel. Pushing to `main` deploys.
 
+## Database backups
+
+The Atlas cluster has no backups of its own, so the site takes them. Vercel's cron (`web/vercel.json`) calls `pages/api/cron/backup.ts` once a day at 02:00 UTC, which copies every database on the cluster into one gzipped JSON file in the private Blob store `electoral-backups` (`src/backend/use_cases/backups/backupCluster.ts`). It only reads the cluster.
+
+- The route answers only to `Authorization: Bearer <CRON_SECRET>`, which Vercel's cron sends. `CRON_SECRET` and `BACKUP_BLOB_READ_WRITE_TOKEN` are set on the Vercel project and in `web/.env.local`.
+- The backup holds contact details and password hashes. Never write it to the site's public store (`BLOB_READ_WRITE_TOKEN`).
+- `node --env-file=.env.local scripts/fetch-backup.mjs` (from `web/`) lists the backups; add `latest` to download one to `~/Backups/electoral-mongodb/blob/` and check it unpacks. `scripts/backup-cluster.mjs` takes a copy straight to this machine instead, in the layout `mongorestore` reads.
+- Files uploaded to Blob (nomination documents, images) are not in the backup. Nothing prunes old backups; each is about 350 KB.
+
 ## Style guide (when touching user-facing copy)
 
 - British English (organise, recognise, honour, programme, centre)
