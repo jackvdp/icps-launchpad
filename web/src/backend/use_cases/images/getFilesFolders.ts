@@ -1,4 +1,5 @@
 import {list} from '@vercel/blob';
+import {siteStore} from 'backend/services/blob/siteStore';
 
 export type FolderStructure = {
     folderName: string;
@@ -10,14 +11,16 @@ export const getFileAndFolderNames = async (): Promise<FolderStructure[]> => {
         // Get all files in the 'hd' folder
         const {folders} = await list({
             prefix: 'hd/',
-            mode: 'folded'
+            mode: 'folded',
+            ...siteStore()
         });
 
         // Process each folder
         const folderPromises = folders?.map(async (folderPath) => {
             // Get files in this specific folder
             const {blobs: folderBlobs} = await list({
-                prefix: folderPath
+                prefix: folderPath,
+                ...siteStore()
             });
 
             // Extract the folder name from the full path

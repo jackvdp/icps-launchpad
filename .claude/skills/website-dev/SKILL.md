@@ -118,6 +118,7 @@ The Atlas cluster has no backups of its own, so the site takes them. Vercel's cr
 
 - The route answers only to `Authorization: Bearer <CRON_SECRET>`, which Vercel's cron sends. `CRON_SECRET` and `BACKUP_BLOB_READ_WRITE_TOKEN` are set on the Vercel project and in `web/.env.local`.
 - The backup holds contact details and password hashes. Never write it to the site's public store (`BLOB_READ_WRITE_TOKEN`).
+- The site's own Blob calls pass `siteStore()` (`src/backend/services/blob/siteStore.ts`) so they always use the public store. Keep doing that in new code: connecting the backup store to the project in Vercel's dashboard adds `BLOB_STORE_ID`, which the Blob package prefers to `BLOB_READ_WRITE_TOKEN`, and on 4 October 2026 that emptied the gallery until the variable was removed. If `BLOB_STORE_ID` or `BLOB_WEBHOOK_PUBLIC_KEY` reappear on the project, remove them.
 - `node --env-file=.env.local scripts/fetch-backup.mjs` (from `web/`) lists the backups; add `latest` to download one to `~/Backups/electoral-mongodb/blob/` and check it unpacks. `scripts/backup-cluster.mjs` takes a copy straight to this machine instead, in the layout `mongorestore` reads.
 - Files uploaded to Blob (nomination documents, images) are not in the backup. Nothing prunes old backups; each is about 350 KB.
 

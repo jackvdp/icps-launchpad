@@ -65,7 +65,7 @@ describe('updateNomination', () => {
 
         expect(record.save).toHaveBeenCalled();
         expect(record.documents).toEqual([DOC_A]);
-        expect(delMock).toHaveBeenCalledWith([DOC_B.url]);
+        expect(delMock).toHaveBeenCalledWith([DOC_B.url], expect.anything());
     });
 
     it('does not call del when every document is kept', async () => {
@@ -93,7 +93,7 @@ describe('updateNomination', () => {
         });
 
         expect(record.documents).toEqual([DOC_A]);
-        expect(delMock).toHaveBeenCalledWith([DOC_B.url]);
+        expect(delMock).toHaveBeenCalledWith([DOC_B.url], expect.anything());
     });
 
     it('appends newly uploaded files to the kept documents', async () => {

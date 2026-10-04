@@ -1,4 +1,5 @@
 import { del } from '@vercel/blob';
+import { siteStore } from 'backend/services/blob/siteStore';
 import dbConnect from 'backend/mongo';
 import Nomination, { INomination, INominationDocument } from 'backend/models/nomination';
 import { isNominationsOpen } from 'data/awards-config';
@@ -89,7 +90,7 @@ export async function updateNomination({
     // leaked blob is preferable to failing an update that has already saved.
     if (removedUrls.length) {
         try {
-            await del(removedUrls);
+            await del(removedUrls, siteStore());
         } catch (error) {
             console.error(`Could not delete removed document blobs for nomination ${id}:`, error);
         }

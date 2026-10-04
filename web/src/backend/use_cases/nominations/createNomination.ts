@@ -1,4 +1,5 @@
 import { put } from '@vercel/blob';
+import { siteStore } from 'backend/services/blob/siteStore';
 import Nomination, { INomination, INominationDocument } from 'backend/models/nomination';
 
 // A file as produced by multer's memory storage.
@@ -79,7 +80,7 @@ export async function uploadNominationDocuments(files: UploadedFile[]): Promise<
         const blob = await put(
             `nominations/${Date.now()}-${file.originalname}`,
             file.buffer,
-            { access: 'public', addRandomSuffix: true }
+            { access: 'public', addRandomSuffix: true, ...siteStore() }
         );
         return {
             name: file.originalname,

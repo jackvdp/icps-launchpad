@@ -1,5 +1,6 @@
 // upload-images.ts
 import {put} from '@vercel/blob';
+import {siteStore} from 'backend/services/blob/siteStore';
 import sharp from 'sharp';
 import path from 'path';
 import fs from 'fs/promises';
@@ -101,7 +102,8 @@ async function uploadImageVersion(
         const blob = await put(blobPathname, buffer, {
             access: 'public',
             addRandomSuffix: false, // Keep original filenames
-            allowOverwrite: true // Re-uploading a file replaces it, as it always has
+            allowOverwrite: true, // Re-uploading a file replaces it, as it always has
+            ...siteStore()
         });
 
         return blob.url;
