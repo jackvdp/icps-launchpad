@@ -54,8 +54,8 @@ export const schedule: Day[] = [
             { time: "12:00 – 12:30", description: "<p><strong>Keynote</strong></p><p>Speaker to be confirmed</p>" },
             { time: "12:45 – 13:00", description: "<p><strong>Symposium Closing</strong></p>" },
             { time: "09:30 – 13:00", description: "<p>(Parallel) Fringe events and industry demonstrations</p>" },
-            { time: "10:45 – 12:45", description: "<p>(Parallel) <strong>Workshop — Who's Trained, Who's Cleared? Trusted Records for the Election Workforce</strong></p><p>A two-hour working session designed with the BSV Association. <a href='/awards/workshops#trusted-records'>Details and booking</a></p>" },
             { time: "13:00", description: "<p>Lunch</p>" },
+            { time: "13:00 – 15:00", description: "<p><strong>Workshop — Who's Trained, Who's Cleared? Trusted Records for the Election Workforce</strong></p><p>A two-hour working session designed with the BSV Association. <a href='/awards/workshops#trusted-records'>Details and booking</a></p>" },
             { time: "Afternoon", description: "<p>Rest or optional local tours prior to the Awards Ceremony</p>" },
             { time: "19:00 – 22:00", description: "<h3>The International Electoral Awards</h3><p>Dinner, entertainment &amp; presentation of the 22nd International Electoral Awards</p>" }
         ]
