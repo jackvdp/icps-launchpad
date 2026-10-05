@@ -54,7 +54,8 @@ export const sponsors2026: Array<Sponsor> = [
         name: "NOMOS"
     },
     {
-        name: "BSV Association"
+        name: "BSV Association",
+        logo: "/img/sponsors/bsva.png"
     },
     {
         name: "Gravity Group / Toppan",
@@ -84,7 +85,7 @@ export const sponsors2026: Array<Sponsor> = [
     },
     {
         name: "Rayudu",
-        logo: "/img/sponsors/rayudu.jpg"
+        logo: "/img/sponsors/rayudu-2026.png"
     },
     {
         name: "Pro V&V",
