@@ -81,7 +81,8 @@ export const sponsors2026: Array<Sponsor> = [
         logo: "/img/sponsors/a-daga.png"
     },
     {
-        name: "Mantratec"
+        name: "Mantratec",
+        logo: "/img/sponsors/mantratec.png"
     },
     {
         name: "Rayudu",
