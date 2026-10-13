@@ -24,7 +24,7 @@ export const schedule: Day[] = [
         ]
     },
     {
-        title: "Day 2 (Tuesday, 1 December) — Symposium (Part 1)",
+        title: "Day 2 (Tuesday, 1 December) — Symposium (Part 1): Securing the Ballot: Global Collaboration for Electoral Resilience and Public Trust",
         events: [
             { time: "08:30", description: "<p>Symposium Registration</p>" },
             { time: "09:00 – 10:00", description: "<p><strong>Opening &amp; Welcoming Session</strong></p><p>Addresses from COMELEC and ICPS leadership</p>" },
@@ -44,7 +44,7 @@ export const schedule: Day[] = [
         ]
     },
     {
-        title: "Day 3 (Wednesday, 2 December) — Symposium (Part 2) & Awards Ceremony",
+        title: "Day 3 (Wednesday, 2 December) — Symposium (Part 2) & Awards Ceremony: Trust, Technology, and Resilience: Unifying Global Election Standards",
         events: [
             { time: "09:00 – 09:30", description: "<p><strong>Keynote</strong></p><p>Professor Ferran Mart&iacute;nez i Coma, Griffith University</p>" },
             { time: "09:30 – 10:00", description: "<p><strong>Keynote &ndash; Securing elections in a rapidly changing environment: experiences from the Swedish elections 2026</strong></p><p>Anna Nyqvist, Chief Executive, Swedish Electoral Authority</p>" },
