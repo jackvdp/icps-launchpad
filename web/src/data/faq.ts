@@ -27,7 +27,7 @@ export const FAQs = [
     no: 'Five',
     expand: true,
     heading: 'What does the programme look like?',
-    body: `The four-day programme includes a welcome reception, two days of symposium sessions with keynotes and panels, the Awards Ceremony dinner, and an optional cultural tour. Session themes and titles are still being confirmed. New for 2026, the programme will also feature dedicated breakout sessions — offering focused discussions, hands-on demonstrations, and peer-to-peer exchanges alongside the main symposium. Full session details will be announced shortly. For the provisional schedule, please see the [schedule page](/awards/schedule).`
+    body: `The four-day programme includes a welcome reception, two days of symposium sessions with keynotes and panels, the Awards Ceremony dinner, and an optional cultural tour. Each symposium day has a theme: "Securing the Ballot: Global Collaboration for Electoral Resilience and Public Trust" on Tuesday 1 December, and "Trust, Technology, and Resilience: Unifying Global Election Standards" on Wednesday 2 December. Session titles are still being confirmed. New for 2026, the programme will also feature dedicated breakout sessions — offering focused discussions, hands-on demonstrations, and peer-to-peer exchanges alongside the main symposium. Full session details will be announced shortly. For the provisional schedule, please see the [schedule page](/awards/schedule).`
   },
   {
     no: 'Six',

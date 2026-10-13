@@ -10,7 +10,7 @@ const Programme: NextPage = () => {
             schedule={schedule}
             headTitle={"Schedule – 22nd International Electoral Awards"}
             dates={"Sunday, 29th November – Thursday, 3rd December 2026"}
-            intro={"Session themes, titles and speakers are still being confirmed and will be announced as the programme develops."}
+            intro={"The symposium takes a theme for each day: \"Securing the Ballot: Global Collaboration for Electoral Resilience and Public Trust\" on Tuesday 1 December, and \"Trust, Technology, and Resilience: Unifying Global Election Standards\" on Wednesday 2 December. Session titles and speakers are still being confirmed and will be announced as the programme develops."}
             eventId={AWARDS_EVENT_ID}
         />
     );
