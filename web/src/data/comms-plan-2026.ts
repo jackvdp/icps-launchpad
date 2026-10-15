@@ -325,7 +325,7 @@ export const commsPlan2026: CommsPlanData = {
             subject: 'Speakers confirmed: Inclusive Elections | 27 October',
             cta: 'Register for webinar / Register for Manila',
             audience: 'Full database.',
-            detail: 'Speaker announcement for the Inclusive Elections webinar (Tuesday 27 October, 14:00–15:30 UTC): Whitney Quesenbery (Center for Civic Design), Virginia Atkinson (IFES), Colleen Roberts (Sightsavers) and Inge Volleberg (Inclusion Europe), with a fifth speaker from a SADC electoral commission to be confirmed. Short reminder that Symposium registration is still open, free with accommodation covered.',
+            detail: 'Speaker announcement for the Inclusive Elections webinar (Tuesday 27 October, 14:00–15:30 UTC): Whitney Quesenbery (Center for Civic Design), Virginia Atkinson (IFES), Colleen Roberts (Sightsavers) and Inge Volleberg (Inclusion Europe). Short reminder that Symposium registration is still open, free with accommodation covered.',
             status: 'drafted',
             tags: ['webinars', 'speakers', 'registration'],
             templateFile: '2026-10-email-33-inclusive-elections-speakers.eml',
